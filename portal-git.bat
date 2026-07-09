@@ -22,7 +22,7 @@ if /i "%MOCKSP_USE_SCHEDULER_TASK%"=="0" (set "MOCKSP_SCHEDULER_TASK=") else (if
 if not defined TRADEVIZ_PORT set "TRADEVIZ_PORT=3002"
 if not defined TRADEVIZ_BASE_PATH set "TRADEVIZ_BASE_PATH=/TradeViz"
 if not defined TRADEVIZ_USE_SCHEDULER_TASK set "TRADEVIZ_USE_SCHEDULER_TASK=1"
-if /i "%TRADEVIZ_USE_SCHEDULER_TASK%"=="0" (set "TRADEVIZ_SCHEDULER_TASK=") else (if not defined TRADEVIZ_SCHEDULER_TASK set "TRADEVIZ_SCHEDULER_TASK=TradeViz")
+if /i "%TRADEVIZ_USE_SCHEDULER_TASK%"=="0" (set "TRADEVIZ_SCHEDULER_TASK=") else (if not defined TRADEVIZ_SCHEDULER_TASK set "TRADEVIZ_SCHEDULER_TASK=Mock TradeViz")
 
 if not exist "%TRADEVIZ_DIR%\package.json" (
   echo [ERROR] TradeViz package.json not found in %TRADEVIZ_DIR%
