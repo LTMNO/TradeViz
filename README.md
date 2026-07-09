@@ -111,10 +111,11 @@ Copy `.env.example` to `.env`:
 
 ```
 PORT=3002
-PUBLIC_BASE_URL=http://your-public-ip:3002
+BASE_PATH=/TradeViz
+PUBLIC_BASE_URL=https://scportal.blueprism.com/TradeViz
 ```
 
-Set `PUBLIC_BASE_URL` when exposing webhooks to Blue Prism on a remote machine.
+Set `BASE_PATH` when serving under a subpath (e.g. `/TradeViz` on scportal). Set `PUBLIC_BASE_URL` for correct API endpoint URLs in the UI.
 
 ## Architecture
 

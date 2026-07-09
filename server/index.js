@@ -4,6 +4,7 @@ import cors from 'cors';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { BASE_PATH } from './basePath.js';
 import { requestLogger, getRequestLogs, clearRequestLogs } from './middleware/requestLog.js';
 import { registerRoutes } from './routes/api.js';
 
@@ -17,6 +18,17 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(requestLogger);
+
+if (BASE_PATH) {
+  app.use((req, _res, next) => {
+    if (req.path === BASE_PATH || req.path.startsWith(`${BASE_PATH}/`)) {
+      const suffix = req.path.slice(BASE_PATH.length) || '/';
+      const query = req.url.slice(req.path.length);
+      req.url = `${suffix}${query}`;
+    }
+    next();
+  });
+}
 
 registerRoutes(app);
 
@@ -49,6 +61,9 @@ app.use((err, _req, res, _next) => {
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`SS&C TradeViz mock running on http://0.0.0.0:${PORT}`);
   console.log('API endpoints are public — no auth required');
+  if (BASE_PATH) {
+    console.log(`Base path: ${BASE_PATH}`);
+  }
   if (!fs.existsSync(indexHtml)) {
     console.log('UI dev server: npm run dev:client (http://localhost:5174)');
   }
