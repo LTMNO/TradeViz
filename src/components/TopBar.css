@@ -1,0 +1,67 @@
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 48px;
+  padding: 0 20px;
+  background: var(--tv-navy);
+  color: var(--tv-white);
+  flex-shrink: 0;
+}
+
+.topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.topbar-logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+}
+
+.logo-ssc {
+  font-size: 15px;
+  letter-spacing: 0.02em;
+}
+
+.logo-divider {
+  opacity: 0.4;
+  font-weight: 300;
+}
+
+.logo-product {
+  font-size: 15px;
+  font-weight: 400;
+  opacity: 0.9;
+}
+
+.topbar-env {
+  font-size: 11px;
+  opacity: 0.6;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.topbar-user {
+  font-size: 12px;
+  opacity: 0.8;
+}
+
+.topbar .btn {
+  color: var(--tv-white);
+  border-color: rgba(255, 255, 255, 0.3);
+  background: transparent;
+}
+
+.topbar .btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
