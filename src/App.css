@@ -392,43 +392,28 @@
 .flow-connector {
   display: flex;
   align-items: center;
-  flex: 0 1 48px;
-  min-width: 24px;
-  padding-top: 28px;
+  flex: 0 1 68px;
+  min-width: 44px;
+  padding-top: 18px;
   color: var(--tv-gray-30);
 }
 
-.flow-connector-line {
-  flex: 1;
-  height: 3px;
-  background: var(--tv-gray-30);
-  border-radius: 2px;
-  transition: background 0.35s ease;
+.flow-connector-svg {
+  width: 100%;
+  height: 16px;
+  display: block;
 }
 
-.flow-connector.completed .flow-connector-line {
-  background: var(--tv-green);
-}
-
-.flow-connector.partial .flow-connector-line {
-  background: linear-gradient(90deg, var(--tv-gray-30) 0%, var(--tv-green) 100%);
-}
-
-.flow-connector.next .flow-connector-line {
-  background: linear-gradient(90deg, var(--tv-green) 0%, var(--tv-gray-30) 100%);
-}
-
-.flow-connector-arrow {
-  font-size: 18px;
-  line-height: 1;
-  margin-left: -2px;
-  color: var(--tv-gray-30);
-  transition: color 0.35s ease;
-}
-
-.flow-connector.completed .flow-connector-arrow,
-.flow-connector.next .flow-connector-arrow {
+.flow-connector-completed {
   color: var(--tv-green);
+}
+
+.flow-connector-partial {
+  color: var(--tv-green);
+}
+
+.flow-connector-next {
+  color: var(--tv-gray-30);
 }
 
 .flow-node {

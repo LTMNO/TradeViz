@@ -32,6 +32,50 @@ function statusLabel(status) {
   return 'Pending';
 }
 
+function FlowConnector({ index, connectorDone, connectorPartial, isNext }) {
+  const state = connectorDone
+    ? 'completed'
+    : connectorPartial
+      ? 'partial'
+      : isNext
+        ? 'next'
+        : 'pending';
+  const gradientId = `flow-conn-${index}`;
+
+  return (
+    <div className={`flow-connector flow-connector-${state}`} aria-hidden="true">
+      <svg className="flow-connector-svg" viewBox="0 0 48 16" preserveAspectRatio="none">
+        {(state === 'partial' || state === 'next') && (
+          <defs>
+            <linearGradient id={gradientId} x1="0" y1="0" x2="1" y2="0">
+              {state === 'partial' ? (
+                <>
+                  <stop offset="0%" stopColor="var(--tv-gray-30)" />
+                  <stop offset="100%" stopColor="var(--tv-green)" />
+                </>
+              ) : (
+                <>
+                  <stop offset="0%" stopColor="var(--tv-green)" />
+                  <stop offset="100%" stopColor="var(--tv-gray-30)" />
+                </>
+              )}
+            </linearGradient>
+          </defs>
+        )}
+        <rect
+          x="0"
+          y="6"
+          width="30"
+          height="4"
+          rx="2"
+          fill={state === 'partial' || state === 'next' ? `url(#${gradientId})` : 'currentColor'}
+        />
+        <path d="M30 1.5 L46 8 L30 14.5 Z" fill="currentColor" />
+      </svg>
+    </div>
+  );
+}
+
 export default function InvestigationLogPage({ log, onReset, onRefresh, logUpdatedAt, resetting }) {
   if (!log) return <div className="page-loading">Loading investigation log…</div>;
 
@@ -111,13 +155,12 @@ export default function InvestigationLogPage({ log, onReset, onRefresh, logUpdat
               return (
                 <div className="flow-segment" key={step.step_id} role="listitem">
                   {index > 0 && (
-                    <div
-                      className={`flow-connector ${connectorDone ? 'completed' : ''} ${connectorPartial ? 'partial' : ''} ${status === 'active' ? 'next' : ''}`}
-                      aria-hidden="true"
-                    >
-                      <span className="flow-connector-line" />
-                      <span className="flow-connector-arrow">›</span>
-                    </div>
+                    <FlowConnector
+                      index={index}
+                      connectorDone={connectorDone}
+                      connectorPartial={connectorPartial}
+                      isNext={status === 'active'}
+                    />
                   )}
 
                   <div className={`flow-node flow-node-${status}`}>
