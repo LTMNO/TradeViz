@@ -31,11 +31,8 @@ if not exist "%TRADEVIZ_DIR%\package.json" (
 )
 
 if /i "%~1"=="portal-deploy" goto RUN_PORTAL_DEPLOY
-if /i "%~1"=="portal-start" goto START_PORTAL_SCHED
 if /i "%~1"=="mocksp-deploy" goto RUN_MOCKSP_DEPLOY
-if /i "%~1"=="mocksp-start" goto START_MOCKSP_SCHED
 if /i "%~1"=="tradeviz-deploy" goto RUN_TRADEVIZ_DEPLOY
-if /i "%~1"=="tradeviz-start" goto START_TRADEVIZ_SCHED
 if /i "%~1"=="help" goto CLI_HELP
 if /i "%~1"=="-h" goto CLI_HELP
 if /i "%~1"=="/?" goto CLI_HELP
@@ -53,34 +50,28 @@ echo   TradeViz  %TRADEVIZ_DIR%
 echo.
 echo   SC Portal        port %PORTAL_PORT%
 echo     1  Deploy
-echo     2  Start scheduler
 echo.
 echo   Mock SharePoint  port %MOCKSP_PORT%  %MOCKSP_BASE_PATH%
-echo     3  Deploy
-echo     4  Start scheduler
+echo     2  Deploy
 echo.
 echo   TradeViz         port %TRADEVIZ_PORT%  %TRADEVIZ_BASE_PATH%
-echo     5  Deploy
-echo     6  Start scheduler
+echo     3  Deploy
 echo.
 echo     0  Exit
 echo.
-choice /c 1234560 /n /m "  Choose: "
+choice /c 1230 /n /m "  Choose: "
 set "PICK=!ERRORLEVEL!"
-if "!PICK!"=="7" goto DONE
-if "!PICK!"=="6" goto DO_TRADEVIZ_START
-if "!PICK!"=="5" goto DO_TRADEVIZ_DEPLOY
-if "!PICK!"=="4" goto DO_MOCKSP_START
-if "!PICK!"=="3" goto DO_MOCKSP_DEPLOY
-if "!PICK!"=="2" goto DO_PORTAL_START
+if "!PICK!"=="4" goto DONE
+if "!PICK!"=="3" goto DO_TRADEVIZ_DEPLOY
+if "!PICK!"=="2" goto DO_MOCKSP_DEPLOY
 goto DO_PORTAL_DEPLOY
 
 :CLI_HELP
 echo.
 echo portal-git.bat
-echo portal-git.bat portal-deploy ^| portal-start
-echo portal-git.bat mocksp-deploy   ^| mocksp-start
-echo portal-git.bat tradeviz-deploy ^| tradeviz-start
+echo portal-git.bat portal-deploy
+echo portal-git.bat mocksp-deploy
+echo portal-git.bat tradeviz-deploy
 echo.
 goto DONE
 
@@ -89,28 +80,13 @@ call :RUN_PORTAL_DEPLOY
 pause
 goto MENU
 
-:DO_PORTAL_START
-call :START_PORTAL_SCHED
-pause
-goto MENU
-
 :DO_MOCKSP_DEPLOY
 call :RUN_MOCKSP_DEPLOY
 pause
 goto MENU
 
-:DO_MOCKSP_START
-call :START_MOCKSP_SCHED
-pause
-goto MENU
-
 :DO_TRADEVIZ_DEPLOY
 call :RUN_TRADEVIZ_DEPLOY
-pause
-goto MENU
-
-:DO_TRADEVIZ_START
-call :START_TRADEVIZ_SCHED
 pause
 goto MENU
 
