@@ -1,6 +1,15 @@
 import { ResourceBadge, formatDate } from '../components/StatusBadge';
 
-export default function InvestigationLogPage({ log, onReset, onRefresh, resetting }) {
+function formatLiveTime(ts) {
+  if (!ts) return 'connecting…';
+  return new Date(ts).toLocaleTimeString('en-US', {
+    hour: 'numeric',
+    minute: '2-digit',
+    second: '2-digit',
+  });
+}
+
+export default function InvestigationLogPage({ log, onReset, onRefresh, logUpdatedAt, resetting }) {
   if (!log) return <div className="page-loading">Loading investigation log…</div>;
 
   return (
@@ -13,9 +22,13 @@ export default function InvestigationLogPage({ log, onReset, onRefresh, resettin
       <div className="panel" style={{ marginBottom: 16 }}>
         <div className="panel-header">
           <h2>Workflow State</h2>
-          <div style={{ display: 'flex', gap: 8 }}>
-            <button className="btn btn-sm" onClick={onRefresh} disabled={resetting}>
-              Refresh
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            <span className="live-badge" title="Updates automatically every second">
+              <span className="live-dot" aria-hidden="true" />
+              Live · {formatLiveTime(logUpdatedAt)}
+            </span>
+            <button className="btn btn-sm btn-ghost" onClick={onRefresh} disabled={resetting}>
+              Refresh now
             </button>
             <button className="btn btn-sm" onClick={onReset} disabled={resetting}>
               {resetting ? 'Resetting…' : 'Reset Demo'}

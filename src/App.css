@@ -130,6 +130,40 @@
   font-size: 11px;
 }
 
+.btn-ghost {
+  background: transparent;
+  border-color: var(--tv-gray-30);
+  color: var(--tv-gray-70);
+}
+
+.btn-ghost:hover {
+  background: var(--tv-gray-10);
+}
+
+.live-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--tv-gray-50);
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: var(--tv-gray-10);
+}
+
+.live-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #22a06b;
+  animation: live-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes live-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.85); }
+}
+
 .detail-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));

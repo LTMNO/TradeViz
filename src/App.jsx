@@ -40,12 +40,14 @@ export default function App() {
   const [trades, setTrades] = useState([]);
   const [ssis, setSsis] = useState([]);
   const [log, setLog] = useState(null);
+  const [logUpdatedAt, setLogUpdatedAt] = useState(null);
   const [endpoints, setEndpoints] = useState(null);
   const [resetting, setResetting] = useState(false);
 
   const refreshLog = useCallback(async () => {
     const res = await fetch(appPath('/api/investigation-log'));
     setLog(await res.json());
+    setLogUpdatedAt(Date.now());
   }, []);
 
   const refresh = useCallback(async () => {
@@ -71,8 +73,20 @@ export default function App() {
 
   useEffect(() => {
     if (page !== 'log') return undefined;
-    const interval = setInterval(refreshLog, 2000);
-    return () => clearInterval(interval);
+
+    refreshLog();
+
+    const poll = () => {
+      if (document.visibilityState === 'visible') refreshLog();
+    };
+
+    const interval = setInterval(poll, 1000);
+    document.addEventListener('visibilitychange', poll);
+
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', poll);
+    };
   }, [page, refreshLog]);
 
   function navigate(targetPage, tradeId) {
@@ -112,6 +126,7 @@ export default function App() {
             onNavigate={navigate}
             onReset={resetDemo}
             onRefresh={refreshLog}
+            logUpdatedAt={logUpdatedAt}
             resetting={resetting}
           />
         </main>
