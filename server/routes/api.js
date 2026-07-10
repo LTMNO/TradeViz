@@ -45,16 +45,21 @@ function normalizeAlertInput(req) {
   const body = req.body ?? {};
   const query = req.query ?? {};
   const data = body.data ?? {};
-  const alert = body.alert ?? data.alert ?? body.body?.alert ?? {};
-  const sources = [query, alert, body, data, body.body];
+  const trade = body.trade ?? data.trade ?? body.body?.trade ?? {};
+  const request = body.request ?? data.request ?? body.body?.request ?? {};
+  const legacyAlert = body.alert ?? data.alert ?? body.body?.alert ?? {};
+  const sources = [query, trade, legacyAlert, body, data, body.body];
 
   const normalized = {
-    trade_id: pickField(sources, 'trade_id'),
-    alert_id: pickField(sources, 'alert_id'),
+    trade_id: pickField(sources, 'trade_id')
+      ?? pickField(sources, 'tradeId'),
+    alert_id: pickField([query, body, data, body.body], 'alert_id')
+      ?? pickField([query, body, data, body.body], 'eventId'),
     client: pickField(sources, 'client'),
-    break_type: pickField(sources, 'break_type'),
+    break_type: pickField(sources, 'break_type')
+      ?? pickField(sources, 'breakType'),
     status: pickField(sources, 'status'),
-    source: pickField(sources, 'source') ?? 'workhq',
+    source: pickField([query, request, body, data, body.body], 'source') ?? 'workhq',
   };
 
   if (normalized.trade_id) {
@@ -74,7 +79,7 @@ function handleLogAlert(req, res) {
   if (!alert.trade_id) {
     return res.status(400).json({
       error: 'trade_id is required',
-      hint: 'Use GET /functions/logFailingTradeAlert?trade_id=... with Data Selector on trade_id only.',
+      hint: 'Map trigger body trade tradeId (or trade_id) via Data Selector.',
       received: { body: req.body ?? {}, query: req.query ?? {} },
     });
   }
