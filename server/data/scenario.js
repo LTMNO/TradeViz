@@ -271,6 +271,7 @@ export function investigateTrade(tradeId) {
     trade_id: trade.id,
     client: trade.client,
     break_type: trade.break_type,
+    alert_id: trade.alert_id,
     status: 'INVESTIGATED',
     root_cause: rootCause,
     expected_ssi: {

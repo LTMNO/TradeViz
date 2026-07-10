@@ -76,6 +76,15 @@ export function recordAgentStep({ break_type, trade_id, summary } = {}) {
 
 export function recordInvestigation(result, detail) {
   const now = new Date().toISOString();
+  if (!steps.find((s) => s.step_id === 'B1')?.timestamp) {
+    recordAlert({
+      trade_id: result.trade_id,
+      alert_id: result.alert_id ?? `ALERT-${result.trade_id}`,
+      client: result.client,
+      break_type: result.break_type,
+      source: 'workhq',
+    });
+  }
   if (!steps.find((s) => s.step_id === 'B2')?.timestamp) {
     recordAgentStep({
       break_type: result.break_type,
