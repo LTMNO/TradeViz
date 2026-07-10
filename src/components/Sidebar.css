@@ -8,6 +8,41 @@
   overflow-y: auto;
 }
 
+.sidebar-demo-switcher {
+  padding: 12px 12px 4px;
+  border-bottom: 1px solid var(--tv-gray-30);
+  background: var(--tv-gray-10);
+}
+
+.demo-switcher-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.demo-switcher-btn {
+  width: 100%;
+  text-align: left;
+  padding: 6px 8px;
+  font-size: 11px;
+  border-radius: 4px;
+  color: var(--tv-gray-70);
+  border: 1px solid var(--tv-gray-30);
+  background: var(--tv-white);
+}
+
+.demo-switcher-btn:hover {
+  border-color: var(--tv-blue);
+  color: var(--tv-navy);
+}
+
+.demo-switcher-btn.active {
+  background: var(--tv-blue-light);
+  border-color: var(--tv-blue);
+  color: var(--tv-blue);
+  font-weight: 600;
+}
+
 .sidebar-section {
   padding: 12px 0 4px;
 }

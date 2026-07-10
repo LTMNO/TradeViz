@@ -1,8 +1,8 @@
 # SS&C TradeViz Mock
 
-A mock post-trade operations platform for the DeDora / WorkHQ demo — specifically **Scenario B (Millennium failing trade)**, step **B3: Investigate in TradeViz**.
+A mock post-trade operations platform for the DeDora / WorkHQ demo — **Scenarios A, B, and C** with deterministic API/webhook endpoints for Blue Prism digital worker integration.
 
-Traditional ops UI with SSI tables, SWIFT message viewers, and deterministic API/webhook endpoints for Blue Prism digital worker integration.
+Traditional ops UI with SSI tables, SWIFT message viewers, pricing mock, EOD commentary, and live workflow audit logs.
 
 ## Quick Start
 
@@ -15,7 +15,28 @@ npm run dev
 - **Frontend:** http://localhost:5174
 - **API / Webhooks:** http://localhost:3002
 
-Millennium demo deep-link: http://localhost:5174/?demo=millennium
+| Scenario | Deep link |
+|----------|-----------|
+| A — Citadel pricing inquiry | `?demo=citadel` |
+| B — Millennium failing trade | `?demo=millennium` |
+| C — EOD commentary | `?demo=eod` |
+
+Production: https://scportal.blueprism.com/TradeViz
+
+## Scenario A — Citadel Pricing Inquiry
+
+| Step | Resource | Action |
+|------|----------|--------|
+| S1 | Signal | Client inquiry received |
+| S2 | AI Agent | Read and interpret request |
+| S3 | Digital Worker | Retrieve pricing |
+| S4 | AI Agent | Draft client-facing reply |
+| S5 | Human | Salesperson approves (**human gate**) |
+| S6 | Digital Worker | Send reply and log |
+
+See `WORKHQ-SCENARIO-A.md` for WorkHQ wiring.
+
+**Demo:** Citadel Advisors — US Treasury 10Y Note indicative price.
 
 ## Scenario B — Millennium Failing Trade
 
@@ -29,58 +50,45 @@ Millennium demo deep-link: http://localhost:5174/?demo=millennium
 
 **Demo trade:** `TRD-2026-048291` — US Treasury 10Y, SSI mismatch (BONY stale vs JPM expected).
 
+## Scenario C — EOD Commentary
+
+| Step | Resource | Action |
+|------|----------|--------|
+| C1 | Signal | Market close (4 pm) |
+| C2 | Digital Worker | Pull client activity from TradeViz |
+| C3 | AI Agent | Draft end-of-day commentary |
+| C4 | Human | Salesperson reviews and approves |
+| C5 | Digital Worker | Send commentary and log |
+
+See `WORKHQ-SCENARIO-C.md` for WorkHQ wiring.
+
 ## API Endpoints
 
-All endpoints are public (no auth) for digital worker / webhook access.
+All endpoints are public (no auth) for digital worker / webhook access. See **API Endpoints** page in the UI for copy-ready URLs.
 
-### B3 — Investigate (Digital Worker)
+### Scenario A — Pricing
 
 ```bash
-# List failing trades for Millennium
-curl "http://localhost:3002/api/trades?status=failed&client=millennium"
+curl "http://localhost:3002/functions/getPrice?instrument=US%20Treasury%2010Y%20Note"
+curl "http://localhost:3002/api/inquiry-log"
+curl -X POST "http://localhost:3002/api/inquiry-log/reset"
+```
 
-# Investigate — returns SSI comparison + recommended fix
-curl "http://localhost:3002/api/trades/TRD-2026-048291/investigate"
+### Scenario B — Investigate
 
-# Webhook alias
+```bash
 curl "http://localhost:3002/functions/investigateTrade?trade_id=TRD-2026-048291"
-```
-
-### B4 — Create Ops Request (Digital Worker)
-
-```bash
-curl -X POST "http://localhost:3002/api/ops-requests" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "trade_id": "TRD-2026-048291",
-    "action": "UPDATE_SETTLEMENT_INSTRUCTION",
-    "ssi_id": "SSI-JPM-4872"
-  }'
-
-# Webhook alias
-curl -X POST "http://localhost:3002/functions/createOpsRequest" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "trade_id": "TRD-2026-048291",
-    "action": "UPDATE_SETTLEMENT_INSTRUCTION",
-    "ssi_id": "SSI-JPM-4872"
-  }'
-```
-
-### Reference Data
-
-```bash
-# Settlement instructions
-curl "http://localhost:3002/api/ssi?client=millennium"
-
-# SWIFT messages for a trade
-curl "http://localhost:3002/api/trades/TRD-2026-048291/swift"
-
-# Investigation log (audit trail)
+curl -X POST "http://localhost:3002/api/ops-requests" -H "Content-Type: application/json" \
+  -d '{"trade_id":"TRD-2026-048291","action":"UPDATE_SETTLEMENT_INSTRUCTION","ssi_id":"SSI-JPM-4872"}'
 curl "http://localhost:3002/api/investigation-log"
+```
 
-# Reset demo state
-curl -X POST "http://localhost:3002/api/investigation-log/reset"
+### Scenario C — EOD
+
+```bash
+curl "http://localhost:3002/functions/pullClientActivity?client=Millennium%20Management"
+curl "http://localhost:3002/api/eod-log"
+curl -X POST "http://localhost:3002/api/eod-log/reset"
 ```
 
 ## UI Pages
@@ -92,7 +100,9 @@ curl -X POST "http://localhost:3002/api/investigation-log/reset"
 | Investigate | SSI comparison, root cause, fix recommendation |
 | Settlement Instructions | SSI master table |
 | SWIFT Messages | MT548/MT515 message viewer |
-| Investigation Log | Scenario B step-by-step audit trail |
+| Pricing Inquiry Log (A) | Scenario A step-by-step audit trail |
+| Investigation Log (B) | Scenario B step-by-step audit trail |
+| EOD Commentary Log (C) | Scenario C step-by-step audit trail |
 | API Endpoints | Copy-ready URLs for Blue Prism |
 | Request Log | Live API request monitor |
 
@@ -121,11 +131,17 @@ Set `BASE_PATH` when serving under a subpath (e.g. `/TradeViz` on scportal). Set
 
 ```
 TradeViz/
-├── src/           # React ops UI
+├── src/           # React ops UI + WorkflowLogView
 ├── server/
-│   ├── data/      # Millennium scenario + ops request store
+│   ├── data/      # Scenario seed data + log stores (A/B/C)
 │   ├── routes/    # API + webhook endpoints
 │   └── index.js   # Express server
 ```
 
-Standalone app — no dependency on SC-Portal. Citadel (Scenario A) and EOD commentary (Scenario C) can be added as secondary data in a future phase.
+Standalone app — no dependency on SC-Portal. Linked from SC Portal → **Tools → TradeViz Mock**.
+
+## Demo docs
+
+- `DEMO-CHEATSHEET.md` — presenter checklist for all three scenarios
+- `WORKHQ-SCENARIO-A.md` — Citadel WorkHQ wiring
+- `WORKHQ-SCENARIO-C.md` — EOD WorkHQ wiring

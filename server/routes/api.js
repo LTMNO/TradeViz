@@ -17,6 +17,28 @@ import {
   recordStepUpdate,
   resetInvestigationLog,
 } from '../data/investigationLogStore.js';
+import {
+  getEodLog,
+  recordMarketClose,
+  recordClientActivityPull,
+  recordDraftCommentary,
+  recordHumanApproval,
+  recordSendCommentary,
+  recordEodStepUpdate,
+  resetEodLog,
+} from '../data/eodLogStore.js';
+import {
+  getInquiryLog,
+  recordInquiry,
+  recordPriceRetrieval,
+  recordDraftReply,
+  recordInquiryApproval,
+  recordSendReply,
+  recordInquiryStepUpdate,
+  resetInquiryLog,
+} from '../data/inquiryLogStore.js';
+import { getPrice, CITADEL_DEMO_CLIENT, CITADEL_DEMO_INSTRUMENT } from '../data/citadelScenario.js';
+import { buildEodSummary, EOD_DEMO_CLIENT } from '../data/eodScenario.js';
 import { clearRequestLogs } from '../middleware/requestLog.js';
 
 function getBaseUrl(req) {
@@ -297,6 +319,170 @@ export function registerRoutes(app) {
     res.json({ success: true, log });
   });
 
+  // --- EOD summary (Scenario C — C2 data pull) ---
+  app.get('/api/eod-summary', (req, res) => {
+    const client = req.query.client ?? EOD_DEMO_CLIENT;
+    res.json(buildEodSummary(client));
+  });
+
+  app.get('/functions/pullClientActivity', (req, res) => {
+    const client = req.query.client ?? EOD_DEMO_CLIENT;
+    const { log, summary } = recordClientActivityPull({ client });
+    res.json({ success: true, summary, log });
+  });
+
+  // --- EOD commentary log (Scenario C — C1–C5) ---
+  app.get('/api/eod-log', (_req, res) => {
+    res.set('Cache-Control', 'no-store, no-cache, must-revalidate');
+    res.json(getEodLog());
+  });
+
+  app.post('/api/eod-log/market-close', (req, res) => {
+    const payload = { ...req.query, ...req.body };
+    const log = recordMarketClose({
+      client: payload.client ?? EOD_DEMO_CLIENT,
+      run_id: payload.run_id ?? payload.workflow_run_id,
+    });
+    res.status(201).json({ success: true, log });
+  });
+
+  app.get('/functions/logMarketClose', (req, res) => {
+    const client = req.query.client ?? EOD_DEMO_CLIENT;
+    const log = recordMarketClose({ client, run_id: req.query.run_id });
+    res.status(201).json({ success: true, log });
+  });
+
+  app.post('/api/eod-log/step', (req, res) => {
+    const payload = { ...req.query, ...req.body, ...(req.body?.data ?? {}) };
+    const stepId = payload.step_id;
+    if (!stepId) {
+      return res.status(400).json({ error: 'step_id is required' });
+    }
+    const log = recordEodStepUpdate({
+      step_id: stepId,
+      detail: payload.detail,
+      draft: payload.draft ?? payload.commentary,
+      approved_by: payload.approved_by,
+      commentary_id: payload.commentary_id,
+      client: payload.client,
+    });
+    res.status(201).json({ success: true, log });
+  });
+
+  app.post('/api/eod-log/approve', (req, res) => {
+    const payload = { ...req.query, ...req.body };
+    const log = recordHumanApproval({
+      approved_by: payload.approved_by ?? 'Salesperson',
+      detail: payload.detail,
+    });
+    res.status(201).json({ success: true, log });
+  });
+
+  app.post('/api/eod-log/send', (req, res) => {
+    const payload = { ...req.query, ...req.body };
+    const log = recordSendCommentary({
+      detail: payload.detail,
+      commentary_id: payload.commentary_id,
+    });
+    res.status(201).json({ success: true, log });
+  });
+
+  app.post('/api/eod-log/reset', (_req, res) => {
+    const log = resetEodLog();
+    res.json({ success: true, log });
+  });
+
+  // --- Pricing inquiry (Scenario A — S1–S6) ---
+  app.get('/api/pricing', (req, res) => {
+    const instrument = req.query.instrument ?? CITADEL_DEMO_INSTRUMENT;
+    const client = req.query.client ?? CITADEL_DEMO_CLIENT;
+    const price = getPrice(instrument, client);
+    if (!price) return res.status(404).json({ error: 'Instrument not found' });
+    res.json(price);
+  });
+
+  app.get('/functions/getPrice', (req, res) => {
+    const instrument = req.query.instrument ?? CITADEL_DEMO_INSTRUMENT;
+    const client = req.query.client ?? CITADEL_DEMO_CLIENT;
+    try {
+      const { log, price } = recordPriceRetrieval({ instrument, client });
+      res.json({ success: true, price, log });
+    } catch (err) {
+      res.status(404).json({ error: err.message ?? 'Instrument not found' });
+    }
+  });
+
+  app.get('/api/inquiry-log', (_req, res) => {
+    res.set('Cache-Control', 'no-store, no-cache, must-revalidate');
+    res.json(getInquiryLog());
+  });
+
+  app.post('/api/inquiry-log/inquiry', (req, res) => {
+    const payload = { ...req.query, ...req.body };
+    const log = recordInquiry({
+      client: payload.client,
+      instrument: payload.instrument,
+      inquiry_id: payload.inquiry_id,
+      detail: payload.detail,
+    });
+    res.status(201).json({ success: true, log });
+  });
+
+  app.get('/functions/logClientInquiry', (req, res) => {
+    const log = recordInquiry({
+      client: req.query.client ?? CITADEL_DEMO_CLIENT,
+      instrument: req.query.instrument ?? CITADEL_DEMO_INSTRUMENT,
+      inquiry_id: req.query.inquiry_id,
+    });
+    res.status(201).json({ success: true, log });
+  });
+
+  app.post('/api/inquiry-log/step', (req, res) => {
+    const payload = { ...req.query, ...req.body, ...(req.body?.data ?? {}) };
+    const stepId = payload.step_id;
+    if (!stepId) {
+      return res.status(400).json({ error: 'step_id is required' });
+    }
+    try {
+      const log = recordInquiryStepUpdate({
+        step_id: stepId,
+        detail: payload.detail,
+        draft: payload.draft ?? payload.reply,
+        approved_by: payload.approved_by,
+        message_id: payload.message_id,
+        client: payload.client,
+        instrument: payload.instrument,
+        inquiry_id: payload.inquiry_id,
+      });
+      res.status(201).json({ success: true, log });
+    } catch (err) {
+      res.status(404).json({ error: err.message ?? 'Step update failed' });
+    }
+  });
+
+  app.post('/api/inquiry-log/approve', (req, res) => {
+    const payload = { ...req.query, ...req.body };
+    const log = recordInquiryApproval({
+      approved_by: payload.approved_by ?? 'Salesperson',
+      detail: payload.detail,
+    });
+    res.status(201).json({ success: true, log });
+  });
+
+  app.post('/api/inquiry-log/send', (req, res) => {
+    const payload = { ...req.query, ...req.body };
+    const log = recordSendReply({
+      detail: payload.detail,
+      message_id: payload.message_id,
+    });
+    res.status(201).json({ success: true, log });
+  });
+
+  app.post('/api/inquiry-log/reset', (_req, res) => {
+    const log = resetInquiryLog();
+    res.json({ success: true, log });
+  });
+
   // --- API documentation ---
   app.get('/api/endpoints', (req, res) => {
     const base = getBaseUrl(req);
@@ -380,6 +566,102 @@ export function registerRoutes(app) {
           path: '/api/investigation-log/reset',
           description: 'Reset demo state, ops requests, and request log',
           example: `${base}/api/investigation-log/reset`,
+        },
+        {
+          method: 'GET',
+          path: '/api/eod-summary',
+          description: 'C2 — Client activity summary for EOD commentary',
+          example: `${base}/api/eod-summary?client=Millennium%20Management`,
+        },
+        {
+          method: 'GET',
+          path: '/functions/pullClientActivity',
+          description: 'C2 webhook alias — ?client=Millennium%20Management',
+          example: `${base}/functions/pullClientActivity?client=Millennium%20Management`,
+        },
+        {
+          method: 'GET',
+          path: '/api/eod-log',
+          description: 'Scenario C audit trail with step state',
+          example: `${base}/api/eod-log`,
+        },
+        {
+          method: 'GET',
+          path: '/functions/logMarketClose',
+          description: 'C1 webhook alias — ?client=Millennium%20Management',
+          example: `${base}/functions/logMarketClose?client=Millennium%20Management`,
+        },
+        {
+          method: 'POST',
+          path: '/api/eod-log/step',
+          description: 'Update a Scenario C step (C3 draft, C4 approve, C5 send)',
+          example: `${base}/api/eod-log/step`,
+        },
+        {
+          method: 'POST',
+          path: '/api/eod-log/approve',
+          description: 'C4 — Human approval before client send',
+          example: `${base}/api/eod-log/approve`,
+        },
+        {
+          method: 'POST',
+          path: '/api/eod-log/send',
+          description: 'C5 — Send approved commentary and log',
+          example: `${base}/api/eod-log/send`,
+        },
+        {
+          method: 'POST',
+          path: '/api/eod-log/reset',
+          description: 'Reset Scenario C demo state',
+          example: `${base}/api/eod-log/reset`,
+        },
+        {
+          method: 'GET',
+          path: '/api/pricing',
+          description: 'S3 — Get indicative price for instrument',
+          example: `${base}/api/pricing?instrument=US%20Treasury%2010Y%20Note&client=Citadel%20Advisors`,
+        },
+        {
+          method: 'GET',
+          path: '/functions/getPrice',
+          description: 'S3 webhook alias — logs S3 and returns price',
+          example: `${base}/functions/getPrice?instrument=US%20Treasury%2010Y%20Note`,
+        },
+        {
+          method: 'GET',
+          path: '/api/inquiry-log',
+          description: 'Scenario A audit trail with step state',
+          example: `${base}/api/inquiry-log`,
+        },
+        {
+          method: 'GET',
+          path: '/functions/logClientInquiry',
+          description: 'S1 webhook alias — log Citadel inquiry',
+          example: `${base}/functions/logClientInquiry?client=Citadel%20Advisors`,
+        },
+        {
+          method: 'POST',
+          path: '/api/inquiry-log/step',
+          description: 'Update a Scenario A step (S4 draft, S5 approve, S6 send)',
+          example: `${base}/api/inquiry-log/step`,
+        },
+        {
+          method: 'POST',
+          path: '/api/inquiry-log/approve',
+          description: 'S5 — Human approval before client send',
+          example: `${base}/api/inquiry-log/approve`,
+        },
+        {
+          method: 'POST',
+          path: '/api/inquiry-log/send',
+          description: 'S6 — Send approved reply and log',
+          example: `${base}/api/inquiry-log/send`,
+        },
+        {
+          method: 'POST',
+          path: '/api/inquiry-log/reset',
+          description: 'Reset Scenario A demo state',
+          example: `${base}/api/inquiry-log/reset`,
         },
       ],
     });

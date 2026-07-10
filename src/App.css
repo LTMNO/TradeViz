@@ -527,6 +527,43 @@
   color: var(--tv-green);
 }
 
+.flow-status-awaiting {
+  background: var(--tv-amber-bg);
+  color: var(--tv-amber);
+}
+
+.flow-node-awaiting .flow-node-icon {
+  border-color: var(--tv-amber);
+  box-shadow: 0 0 0 4px var(--tv-amber-bg);
+}
+
+.flow-node-human-gate .flow-human-gate-note {
+  font-size: 10px;
+  color: var(--tv-amber);
+  font-weight: 600;
+  margin-top: 4px;
+}
+
+.eod-highlights {
+  margin: 12px 0 0;
+  padding-left: 18px;
+  font-size: 12px;
+  color: var(--tv-gray-70);
+  line-height: 1.5;
+}
+
+.eod-commentary-draft {
+  margin: 0;
+  white-space: pre-wrap;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--tv-gray-70);
+  background: var(--tv-gray-10);
+  border: 1px solid var(--tv-gray-30);
+  border-radius: 4px;
+  padding: 12px;
+}
+
 .flow-node-detail {
   margin-top: 8px;
   font-size: 11px;

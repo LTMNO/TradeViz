@@ -6,20 +6,49 @@ const NAV_ITEMS = [
   { id: 'investigate', label: 'Investigate', section: 'main' },
   { id: 'ssi', label: 'Settlement Instructions', section: 'data' },
   { id: 'swift', label: 'SWIFT Messages', section: 'data' },
-  { id: 'log', label: 'Investigation Log', section: 'demo' },
+  { id: 'inquirylog', label: 'Pricing Inquiry Log (A)', section: 'demo' },
+  { id: 'log', label: 'Investigation Log (B)', section: 'demo' },
+  { id: 'eodlog', label: 'EOD Commentary Log (C)', section: 'demo' },
   { id: 'api', label: 'API Endpoints', section: 'demo' },
   { id: 'debug', label: 'Request Log', section: 'demo' },
 ];
 
-export default function Sidebar({ activePage, onNavigate }) {
+const DEMO_SCENARIOS = [
+  { id: 'citadel', label: 'A — Citadel Inquiry', page: 'inquirylog', footer: 'US Treasury 10Y Note' },
+  { id: 'millennium', label: 'B — Millennium', page: 'log', footer: 'TRD-2026-048291' },
+  { id: 'eod', label: 'C — EOD Commentary', page: 'eodlog', footer: 'Millennium Management' },
+];
+
+export default function Sidebar({ activePage, onNavigate, demoMode, onSwitchDemo }) {
   const sections = [
     { key: 'main', label: 'Operations' },
     { key: 'data', label: 'Reference Data' },
     { key: 'demo', label: 'Demo / Integration' },
   ];
 
+  const activeScenario = DEMO_SCENARIOS.find((s) => s.id === demoMode) ?? DEMO_SCENARIOS[1];
+
   return (
     <aside className="sidebar">
+      <div className="sidebar-demo-switcher">
+        <div className="sidebar-section-label">Active scenario</div>
+        <div className="demo-switcher-buttons">
+          {DEMO_SCENARIOS.map((scenario) => (
+            <button
+              key={scenario.id}
+              type="button"
+              className={`demo-switcher-btn ${demoMode === scenario.id ? 'active' : ''}`}
+              onClick={() => {
+                onSwitchDemo?.(scenario.id);
+                onNavigate(scenario.page);
+              }}
+            >
+              {scenario.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
       {sections.map((section) => (
         <div key={section.key} className="sidebar-section">
           <div className="sidebar-section-label">{section.label}</div>
@@ -37,8 +66,8 @@ export default function Sidebar({ activePage, onNavigate }) {
         </div>
       ))}
       <div className="sidebar-footer">
-        <div className="sidebar-scenario">Scenario B — Millennium</div>
-        <div className="sidebar-trade">TRD-2026-048291</div>
+        <div className="sidebar-scenario">{activeScenario.label}</div>
+        <div className="sidebar-trade">{activeScenario.footer}</div>
       </div>
     </aside>
   );
