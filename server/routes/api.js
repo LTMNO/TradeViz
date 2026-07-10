@@ -45,10 +45,10 @@ function normalizeAlertInput(req) {
   const body = req.body ?? {};
   const query = req.query ?? {};
   const data = body.data ?? {};
-  const alert = body.alert ?? data.alert ?? {};
-  const sources = [query, body, data, alert];
+  const alert = body.alert ?? data.alert ?? body.body?.alert ?? {};
+  const sources = [query, alert, body, data, body.body];
 
-  return {
+  const normalized = {
     trade_id: pickField(sources, 'trade_id'),
     alert_id: pickField(sources, 'alert_id'),
     client: pickField(sources, 'client'),
@@ -56,6 +56,30 @@ function normalizeAlertInput(req) {
     status: pickField(sources, 'status'),
     source: pickField(sources, 'source') ?? 'workhq',
   };
+
+  if (normalized.trade_id) {
+    const trade = getTradeById(normalized.trade_id);
+    if (trade) {
+      normalized.client ??= trade.client;
+      normalized.break_type ??= trade.break_type;
+      normalized.status ??= trade.status;
+    }
+  }
+
+  return normalized;
+}
+
+function handleLogAlert(req, res) {
+  const alert = normalizeAlertInput(req);
+  if (!alert.trade_id) {
+    return res.status(400).json({
+      error: 'trade_id is required',
+      hint: 'Use GET /functions/logFailingTradeAlert?trade_id=... with Data Selector on trade_id only.',
+      received: { body: req.body ?? {}, query: req.query ?? {} },
+    });
+  }
+  const log = recordAlert(alert);
+  return res.status(201).json({ success: true, log });
 }
 
 function filterTrades(query) {
@@ -228,16 +252,12 @@ export function registerRoutes(app) {
   });
 
   app.post('/api/investigation-log/alert', (req, res) => {
-    const alert = normalizeAlertInput(req);
-    if (!alert.trade_id) {
-      return res.status(400).json({
-        error: 'trade_id is required',
-        hint: 'Map trigger.body.alert.trade_id via Data Selector, or pass ?trade_id= in the query string.',
-        received: { body: req.body ?? {}, query: req.query ?? {} },
-      });
-    }
-    const log = recordAlert(alert);
-    res.status(201).json({ success: true, log });
+    handleLogAlert(req, res);
+  });
+
+  // Webhook alias for B1 — one query param (same pattern as investigateTrade)
+  app.get('/functions/logFailingTradeAlert', (req, res) => {
+    handleLogAlert(req, res);
   });
 
   app.post('/api/investigation-log/step', (req, res) => {
@@ -336,6 +356,12 @@ export function registerRoutes(app) {
           path: '/api/investigation-log/alert',
           description: 'B1 — Record failing-trade alert from WorkHQ',
           example: `${base}/api/investigation-log/alert`,
+        },
+        {
+          method: 'GET',
+          path: '/functions/logFailingTradeAlert',
+          description: 'B1 webhook alias — ?trade_id=TRD-2026-048291 (one Data Selector field)',
+          example: `${base}/functions/logFailingTradeAlert?trade_id=TRD-2026-048291`,
         },
         {
           method: 'POST',
