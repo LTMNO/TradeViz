@@ -257,6 +257,34 @@
 .timeline .step-badge.worker { background: var(--tv-blue); }
 .timeline .step-badge.human { background: var(--tv-amber); }
 
+.step-badge.signal,
+.resource-badge.signal { background: var(--tv-gray-50); }
+.step-badge.agent,
+.resource-badge.agent { background: var(--tv-purple); }
+.step-badge.worker,
+.resource-badge.worker { background: var(--tv-blue); }
+.step-badge.human,
+.resource-badge.human { background: var(--tv-amber); }
+
+.resource-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  width: auto;
+  height: auto;
+  padding: 3px 8px;
+  border-radius: 3px;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--tv-white);
+}
+
+.resource-badge-icon {
+  display: inline-flex;
+  flex-shrink: 0;
+  line-height: 0;
+}
+
 .timeline .step-content {
   flex: 1;
 }
@@ -270,6 +298,295 @@
   font-size: 11px;
   color: var(--tv-gray-50);
   margin-top: 2px;
+}
+
+/* Horizontal workflow flow chart (Investigation Log) */
+.flow-page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.flow-header-controls {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.flow-panel-body {
+  padding: 20px 16px 24px;
+  overflow-x: auto;
+}
+
+.flow-progress-label {
+  font-size: 12px;
+  color: var(--tv-gray-50);
+  font-weight: 500;
+}
+
+.flow-progress-track {
+  height: 6px;
+  background: var(--tv-gray-20);
+  border-radius: 999px;
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+
+.flow-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--tv-blue), var(--tv-green));
+  border-radius: 999px;
+  transition: width 0.45s ease;
+}
+
+.flow-meta-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+
+.flow-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--tv-gray-10);
+  border: 1px solid var(--tv-gray-30);
+  color: var(--tv-gray-70);
+}
+
+.flow-chip code {
+  font-size: 11px;
+}
+
+.flow-chip-success {
+  background: var(--tv-green-bg);
+  border-color: var(--tv-green);
+  color: var(--tv-green);
+}
+
+.flow-chart {
+  display: flex;
+  align-items: flex-start;
+  min-width: min(100%, 1100px);
+  padding: 8px 4px 4px;
+}
+
+.flow-segment {
+  display: flex;
+  align-items: flex-start;
+  flex: 1;
+  min-width: 0;
+}
+
+.flow-segment:last-child .flow-node {
+  flex: 1;
+}
+
+.flow-connector {
+  display: flex;
+  align-items: center;
+  flex: 0 1 48px;
+  min-width: 24px;
+  padding-top: 28px;
+  color: var(--tv-gray-30);
+}
+
+.flow-connector-line {
+  flex: 1;
+  height: 3px;
+  background: var(--tv-gray-30);
+  border-radius: 2px;
+  transition: background 0.35s ease;
+}
+
+.flow-connector.completed .flow-connector-line {
+  background: var(--tv-green);
+}
+
+.flow-connector.partial .flow-connector-line {
+  background: linear-gradient(90deg, var(--tv-gray-30) 0%, var(--tv-green) 100%);
+}
+
+.flow-connector.next .flow-connector-line {
+  background: linear-gradient(90deg, var(--tv-green) 0%, var(--tv-gray-30) 100%);
+}
+
+.flow-connector-arrow {
+  font-size: 18px;
+  line-height: 1;
+  margin-left: -2px;
+  color: var(--tv-gray-30);
+  transition: color 0.35s ease;
+}
+
+.flow-connector.completed .flow-connector-arrow,
+.flow-connector.next .flow-connector-arrow {
+  color: var(--tv-green);
+}
+
+.flow-node {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  flex: 1;
+  min-width: 140px;
+  max-width: 200px;
+  padding: 0 6px;
+}
+
+.flow-node-icon {
+  position: relative;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--tv-white);
+  border: 3px solid transparent;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease;
+}
+
+.flow-node-icon.signal { background: var(--tv-gray-50); }
+.flow-node-icon.agent { background: var(--tv-purple); }
+.flow-node-icon.worker { background: var(--tv-blue); }
+.flow-node-icon.human { background: var(--tv-amber); }
+
+.flow-node-pending .flow-node-icon {
+  opacity: 0.55;
+}
+
+.flow-node-active .flow-node-icon {
+  border-color: var(--tv-blue);
+  box-shadow: 0 0 0 4px var(--tv-blue-light);
+  transform: scale(1.05);
+}
+
+.flow-node-completed .flow-node-icon {
+  background: var(--tv-green) !important;
+  border-color: var(--tv-green);
+}
+
+.flow-check {
+  font-size: 22px;
+  line-height: 1;
+}
+
+.flow-node-pulse {
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  border: 2px solid var(--tv-blue);
+  animation: flow-pulse 1.6s ease-out infinite;
+  pointer-events: none;
+}
+
+@keyframes flow-pulse {
+  0% { opacity: 0.9; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.35); }
+}
+
+.flow-node-body {
+  margin-top: 12px;
+  width: 100%;
+}
+
+.flow-node-action {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--tv-navy);
+  line-height: 1.35;
+  min-height: 2.7em;
+}
+
+.flow-node-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.flow-status-pill {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+
+.flow-status-pending {
+  background: var(--tv-gray-20);
+  color: var(--tv-gray-50);
+}
+
+.flow-status-active {
+  background: var(--tv-blue-light);
+  color: var(--tv-blue);
+}
+
+.flow-status-completed {
+  background: var(--tv-green-bg);
+  color: var(--tv-green);
+}
+
+.flow-node-detail {
+  margin-top: 8px;
+  font-size: 11px;
+  color: var(--tv-gray-50);
+  line-height: 1.4;
+  text-align: left;
+  padding: 8px;
+  border-radius: 4px;
+  background: var(--tv-gray-10);
+  border: 1px solid var(--tv-gray-30);
+  min-height: 4.5em;
+}
+
+.flow-node-detail.done {
+  background: var(--tv-green-bg);
+  border-color: rgba(34, 160, 107, 0.35);
+  color: var(--tv-gray-70);
+}
+
+.flow-node-detail time {
+  display: block;
+  font-size: 10px;
+  color: var(--tv-green);
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.flow-detail-text {
+  display: block;
+}
+
+.flow-complete-banner p {
+  font-size: 12px;
+  color: var(--tv-gray-70);
+  margin: 0;
+}
+
+@media (max-width: 900px) {
+  .flow-chart {
+    min-width: 860px;
+  }
+
+  .flow-node {
+    min-width: 120px;
+  }
 }
 
 .endpoint-card {
