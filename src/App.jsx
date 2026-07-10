@@ -25,7 +25,8 @@ const PAGES = {
 
 function getInitialPage() {
   const params = new URLSearchParams(window.location.search);
-  return params.get('demo') === 'millennium' ? 'investigate' : 'dashboard';
+  if (params.get('demo') === 'millennium') return 'log';
+  return 'dashboard';
 }
 
 function getInitialTradeId() {
@@ -45,7 +46,11 @@ export default function App() {
   const [resetting, setResetting] = useState(false);
 
   const refreshLog = useCallback(async () => {
-    const res = await fetch(appPath('/api/investigation-log'));
+    const res = await fetch(appPath(`/api/investigation-log?_=${Date.now()}`), {
+      cache: 'no-store',
+      headers: { 'Cache-Control': 'no-cache' },
+    });
+    if (!res.ok) return;
     setLog(await res.json());
     setLogUpdatedAt(Date.now());
   }, []);
@@ -69,24 +74,13 @@ export default function App() {
 
   useEffect(() => {
     refresh();
-  }, [refresh]);
-
-  useEffect(() => {
-    if (page !== 'log') return undefined;
-
     refreshLog();
+  }, [refresh, refreshLog]);
 
-    const poll = () => {
-      if (document.visibilityState === 'visible') refreshLog();
-    };
-
-    const interval = setInterval(poll, 1000);
-    document.addEventListener('visibilitychange', poll);
-
-    return () => {
-      clearInterval(interval);
-      document.removeEventListener('visibilitychange', poll);
-    };
+  // Always keep investigation log fresh in the background (demo side-by-side with WorkHQ).
+  useEffect(() => {
+    const interval = setInterval(refreshLog, page === 'log' ? 500 : 2000);
+    return () => clearInterval(interval);
   }, [page, refreshLog]);
 
   function navigate(targetPage, tradeId) {

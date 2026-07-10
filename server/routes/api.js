@@ -253,6 +253,7 @@ export function registerRoutes(app) {
 
   // --- Investigation log ---
   app.get('/api/investigation-log', (_req, res) => {
+    res.set('Cache-Control', 'no-store, no-cache, must-revalidate');
     res.json(getInvestigationLog());
   });
 

@@ -23,9 +23,10 @@ export default function InvestigationLogPage({ log, onReset, onRefresh, logUpdat
         <div className="panel-header">
           <h2>Workflow State</h2>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-            <span className="live-badge" title="Updates automatically every second">
+            <span className="live-badge" title="Updates automatically while this page is open">
               <span className="live-dot" aria-hidden="true" />
-              Live · {formatLiveTime(logUpdatedAt)}
+              Live · every {logUpdatedAt ? '0.5s' : '…'}
+              {logUpdatedAt ? ` · ${formatLiveTime(logUpdatedAt)}` : ''}
             </span>
             <button className="btn btn-sm btn-ghost" onClick={onRefresh} disabled={resetting}>
               Refresh now
