@@ -18,6 +18,8 @@ import {
   resetInvestigationLog,
 } from '../data/investigationLogStore.js';
 import { clearRequestLogs } from '../middleware/requestLog.js';
+
+function getBaseUrl(req) {
   const configured = process.env.PUBLIC_BASE_URL?.trim().replace(/\/$/, '');
   if (configured) return configured;
   const proto = req.headers['x-forwarded-proto'] || req.protocol;
@@ -44,7 +46,7 @@ function filterTrades(query) {
   return results;
 }
 
-function getBaseUrl(req) {
+export function registerRoutes(app) {
   // --- Dashboard ---
   app.get('/api/stats', (_req, res) => {
     res.json(getDashboardStats());
