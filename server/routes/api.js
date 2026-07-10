@@ -27,6 +27,37 @@ function getBaseUrl(req) {
   return `${proto}://${host}`;
 }
 
+function pickField(sources, key) {
+  for (const source of sources) {
+    const value = source?.[key];
+    if (value === undefined || value === null) continue;
+    if (typeof value === 'string') {
+      const trimmed = value.trim();
+      if (trimmed) return trimmed;
+      continue;
+    }
+    return value;
+  }
+  return undefined;
+}
+
+function normalizeAlertInput(req) {
+  const body = req.body ?? {};
+  const query = req.query ?? {};
+  const data = body.data ?? {};
+  const alert = body.alert ?? data.alert ?? {};
+  const sources = [query, body, data, alert];
+
+  return {
+    trade_id: pickField(sources, 'trade_id'),
+    alert_id: pickField(sources, 'alert_id'),
+    client: pickField(sources, 'client'),
+    break_type: pickField(sources, 'break_type'),
+    status: pickField(sources, 'status'),
+    source: pickField(sources, 'source') ?? 'workhq',
+  };
+}
+
 function filterTrades(query) {
   let results = [...TRADES];
   if (query.status) {
@@ -197,9 +228,13 @@ export function registerRoutes(app) {
   });
 
   app.post('/api/investigation-log/alert', (req, res) => {
-    const alert = { ...req.body, ...(req.body?.data ?? {}) };
+    const alert = normalizeAlertInput(req);
     if (!alert.trade_id) {
-      return res.status(400).json({ error: 'trade_id is required' });
+      return res.status(400).json({
+        error: 'trade_id is required',
+        hint: 'Map trigger.body.alert.trade_id via Data Selector, or pass ?trade_id= in the query string.',
+        received: { body: req.body ?? {}, query: req.query ?? {} },
+      });
     }
     const log = recordAlert(alert);
     res.status(201).json({ success: true, log });
