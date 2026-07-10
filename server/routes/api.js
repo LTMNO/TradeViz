@@ -261,7 +261,7 @@ export function registerRoutes(app) {
   });
 
   app.post('/api/investigation-log/step', (req, res) => {
-    const payload = { ...req.body, ...(req.body?.data ?? {}) };
+    const payload = { ...req.query, ...req.body, ...(req.body?.data ?? {}) };
     const stepId = payload.step_id;
     if (!stepId) {
       return res.status(400).json({ error: 'step_id is required' });
