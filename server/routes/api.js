@@ -2,24 +2,22 @@ import {
   TRADES,
   SSIS,
   SWIFT_MESSAGES,
-  INVESTIGATION_LOG,
   getTradeById,
   investigateTrade,
   getDashboardStats,
   getSsiById,
 } from '../data/scenario.js';
-import { createOpsRequest, listOpsRequests, getOpsRequest } from '../data/opsStore.js';
-
-let investigationState = {
-  b3_completed: false,
-  b4_completed: false,
-  b3_timestamp: null,
-  b4_timestamp: null,
-  last_investigation: null,
-  last_ops_request: null,
-};
-
-function getBaseUrl(req) {
+import { createOpsRequest, listOpsRequests, getOpsRequest, clearOpsRequests } from '../data/opsStore.js';
+import {
+  getInvestigationLog,
+  recordAlert,
+  recordInvestigation,
+  recordOpsRequest,
+  recordNotificationStep,
+  recordStepUpdate,
+  resetInvestigationLog,
+} from '../data/investigationLogStore.js';
+import { clearRequestLogs } from '../middleware/requestLog.js';
   const configured = process.env.PUBLIC_BASE_URL?.trim().replace(/\/$/, '');
   if (configured) return configured;
   const proto = req.headers['x-forwarded-proto'] || req.protocol;
@@ -46,15 +44,7 @@ function filterTrades(query) {
   return results;
 }
 
-function updateInvestigationLog(stepId, timestamp, detail) {
-  const entry = INVESTIGATION_LOG.find((l) => l.step_id === stepId);
-  if (entry) {
-    entry.timestamp = timestamp;
-    entry.detail = detail;
-  }
-}
-
-export function registerRoutes(app) {
+function getBaseUrl(req) {
   // --- Dashboard ---
   app.get('/api/stats', (_req, res) => {
     res.json(getDashboardStats());
@@ -76,15 +66,8 @@ export function registerRoutes(app) {
     const result = investigateTrade(req.params.id);
     if (!result) return res.status(404).json({ error: 'Trade not found or cannot be investigated' });
 
-    investigationState = {
-      ...investigationState,
-      b3_completed: true,
-      b3_timestamp: new Date().toISOString(),
-      last_investigation: result,
-    };
-    updateInvestigationLog(
-      'B3',
-      investigationState.b3_timestamp,
+    recordInvestigation(
+      result,
       `Identified fix: ${result.recommended_fix.action} → ${result.recommended_fix.ssi_id ?? 'manual review'}`,
     );
 
@@ -95,15 +78,8 @@ export function registerRoutes(app) {
     const result = investigateTrade(req.params.id);
     if (!result) return res.status(404).json({ error: 'Trade not found or cannot be investigated' });
 
-    investigationState = {
-      ...investigationState,
-      b3_completed: true,
-      b3_timestamp: new Date().toISOString(),
-      last_investigation: result,
-    };
-    updateInvestigationLog(
-      'B3',
-      investigationState.b3_timestamp,
+    recordInvestigation(
+      result,
       `Identified fix: ${result.recommended_fix.action} → ${result.recommended_fix.ssi_id ?? 'manual review'}`,
     );
 
@@ -169,15 +145,8 @@ export function registerRoutes(app) {
 
     const record = createOpsRequest({ trade_id, action, ssi_id, source: req.body?.source ?? 'api' });
 
-    investigationState = {
-      ...investigationState,
-      b4_completed: true,
-      b4_timestamp: new Date().toISOString(),
-      last_ops_request: record,
-    };
-    updateInvestigationLog(
-      'B4',
-      investigationState.b4_timestamp,
+    recordOpsRequest(
+      record,
       `Ops request ${record.id} created: ${action}${ssi_id ? ` → ${ssi_id}` : ''}`,
     );
 
@@ -196,15 +165,8 @@ export function registerRoutes(app) {
 
     const record = createOpsRequest({ trade_id, action, ssi_id, source: 'webhook' });
 
-    investigationState = {
-      ...investigationState,
-      b4_completed: true,
-      b4_timestamp: new Date().toISOString(),
-      last_ops_request: record,
-    };
-    updateInvestigationLog(
-      'B4',
-      investigationState.b4_timestamp,
+    recordOpsRequest(
+      record,
       `Ops request ${record.id} created via webhook: ${action}`,
     );
 
@@ -219,15 +181,8 @@ export function registerRoutes(app) {
     const result = investigateTrade(tradeId);
     if (!result) return res.status(404).json({ error: 'Trade not found' });
 
-    investigationState = {
-      ...investigationState,
-      b3_completed: true,
-      b3_timestamp: new Date().toISOString(),
-      last_investigation: result,
-    };
-    updateInvestigationLog(
-      'B3',
-      investigationState.b3_timestamp,
+    recordInvestigation(
+      result,
       `Webhook investigation: ${result.recommended_fix.action}`,
     );
 
@@ -236,26 +191,47 @@ export function registerRoutes(app) {
 
   // --- Investigation log ---
   app.get('/api/investigation-log', (_req, res) => {
-    res.json({
-      scenario: 'Millennium failing trade (B1–B5)',
-      steps: INVESTIGATION_LOG,
-      state: investigationState,
-    });
+    res.json(getInvestigationLog());
+  });
+
+  app.post('/api/investigation-log/alert', (req, res) => {
+    const alert = { ...req.body, ...(req.body?.data ?? {}) };
+    if (!alert.trade_id) {
+      return res.status(400).json({ error: 'trade_id is required' });
+    }
+    const log = recordAlert(alert);
+    res.status(201).json({ success: true, log });
+  });
+
+  app.post('/api/investigation-log/step', (req, res) => {
+    const payload = { ...req.body, ...(req.body?.data ?? {}) };
+    const stepId = payload.step_id;
+    if (!stepId) {
+      return res.status(400).json({ error: 'step_id is required' });
+    }
+
+    let log;
+    if (stepId === 'B5') {
+      log = recordNotificationStep({
+        detail: payload.detail,
+        ops_request_id: payload.ops_request_id,
+        trade_id: payload.trade_id,
+      });
+    } else {
+      log = recordStepUpdate({
+        step_id: stepId,
+        detail: payload.detail,
+      });
+    }
+
+    res.status(201).json({ success: true, log });
   });
 
   app.post('/api/investigation-log/reset', (_req, res) => {
-    investigationState = {
-      b3_completed: false,
-      b4_completed: false,
-      b3_timestamp: null,
-      b4_timestamp: null,
-      last_investigation: null,
-      last_ops_request: null,
-    };
-    updateInvestigationLog('B3', null, 'Pending — retrieve trade, compare SSIs, identify fix');
-    updateInvestigationLog('B4', null, 'Pending — internal operational action, no human gate');
-    updateInvestigationLog('B5', null, 'Pending — after-the-fact notification, no approval required');
-    res.json({ success: true, state: investigationState });
+    clearOpsRequests();
+    clearRequestLogs();
+    const log = resetInvestigationLog();
+    res.json({ success: true, log });
   });
 
   // --- API documentation ---
@@ -317,6 +293,24 @@ export function registerRoutes(app) {
           path: '/api/investigation-log',
           description: 'Scenario B audit trail with step state',
           example: `${base}/api/investigation-log`,
+        },
+        {
+          method: 'POST',
+          path: '/api/investigation-log/alert',
+          description: 'B1 — Record failing-trade alert from WorkHQ',
+          example: `${base}/api/investigation-log/alert`,
+        },
+        {
+          method: 'POST',
+          path: '/api/investigation-log/step',
+          description: 'Update a scenario step (e.g. B5 notification)',
+          example: `${base}/api/investigation-log/step`,
+        },
+        {
+          method: 'POST',
+          path: '/api/investigation-log/reset',
+          description: 'Reset demo state, ops requests, and request log',
+          example: `${base}/api/investigation-log/reset`,
         },
       ],
     });

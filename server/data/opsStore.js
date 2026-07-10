@@ -25,3 +25,7 @@ export function createOpsRequest({ trade_id, action, ssi_id, source = 'api' }) {
 export function getOpsRequest(id) {
   return opsRequests.find((r) => r.id === id) ?? null;
 }
+
+export function clearOpsRequests() {
+  opsRequests.length = 0;
+}

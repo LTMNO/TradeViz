@@ -1,7 +1,7 @@
 import { ResourceBadge, formatDate } from '../components/StatusBadge';
 
-export default function InvestigationLogPage({ log, onReset }) {
-  if (!log) return <div>Loading...</div>;
+export default function InvestigationLogPage({ log, onReset, onRefresh, resetting }) {
+  if (!log) return <div className="page-loading">Loading investigation log…</div>;
 
   return (
     <div>
@@ -13,7 +13,14 @@ export default function InvestigationLogPage({ log, onReset }) {
       <div className="panel" style={{ marginBottom: 16 }}>
         <div className="panel-header">
           <h2>Workflow State</h2>
-          <button className="btn btn-sm" onClick={onReset}>Reset Demo</button>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button className="btn btn-sm" onClick={onRefresh} disabled={resetting}>
+              Refresh
+            </button>
+            <button className="btn btn-sm" onClick={onReset} disabled={resetting}>
+              {resetting ? 'Resetting…' : 'Reset Demo'}
+            </button>
+          </div>
         </div>
         <div className="panel-body">
           <div className="detail-grid">
@@ -24,6 +31,10 @@ export default function InvestigationLogPage({ log, onReset }) {
             <div className="detail-item">
               <div className="label">B4 — Ops Request</div>
               <div className="value">{log.state?.b4_completed ? `Completed ${formatDate(log.state.b4_timestamp)}` : 'Pending'}</div>
+            </div>
+            <div className="detail-item">
+              <div className="label">B5 — Notification</div>
+              <div className="value">{log.state?.b5_completed ? `Completed ${formatDate(log.state.b5_timestamp)}` : 'Pending'}</div>
             </div>
             {log.state?.last_ops_request && (
               <div className="detail-item">

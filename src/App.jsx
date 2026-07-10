@@ -41,6 +41,12 @@ export default function App() {
   const [ssis, setSsis] = useState([]);
   const [log, setLog] = useState(null);
   const [endpoints, setEndpoints] = useState(null);
+  const [resetting, setResetting] = useState(false);
+
+  const refreshLog = useCallback(async () => {
+    const res = await fetch(appPath('/api/investigation-log'));
+    setLog(await res.json());
+  }, []);
 
   const refresh = useCallback(async () => {
     const [statsRes, tradesRes, ssiRes, logRes, epRes] = await Promise.all([
@@ -63,21 +69,36 @@ export default function App() {
     refresh();
   }, [refresh]);
 
+  useEffect(() => {
+    if (page !== 'log') return undefined;
+    const interval = setInterval(refreshLog, 2000);
+    return () => clearInterval(interval);
+  }, [page, refreshLog]);
+
   function navigate(targetPage, tradeId) {
     if (tradeId) setSelectedTradeId(tradeId);
     setPage(targetPage);
   }
 
   async function resetDemo() {
-    await fetch(appPath('/api/investigation-log/reset'), { method: 'POST' });
-    refresh();
+    setResetting(true);
+    try {
+      const res = await fetch(appPath('/api/investigation-log/reset'), { method: 'POST' });
+      const data = await res.json();
+      if (data.log) setLog(data.log);
+      else await refreshLog();
+    } finally {
+      setResetting(false);
+    }
   }
+
+  const topBarRefresh = page === 'log' ? refreshLog : refresh;
 
   const PageComponent = PAGES[page] || DashboardPage;
 
   return (
     <div className="app">
-      <TopBar onRefresh={refresh} />
+      <TopBar onRefresh={topBarRefresh} />
       <div className="app-body">
         <Sidebar activePage={page} onNavigate={navigate} />
         <main className="main-content">
@@ -90,6 +111,8 @@ export default function App() {
             selectedTradeId={selectedTradeId}
             onNavigate={navigate}
             onReset={resetDemo}
+            onRefresh={refreshLog}
+            resetting={resetting}
           />
         </main>
       </div>

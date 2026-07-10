@@ -1,24 +1,30 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { appPath } from '../appPath';
 import { formatDate } from '../components/StatusBadge';
 
 export default function DebugPage() {
   const [logs, setLogs] = useState([]);
+  const [busy, setBusy] = useState(false);
 
-  function refresh() {
-    fetch(appPath('/api/debug/requests'))
-      .then((r) => r.json())
-      .then(setLogs);
-  }
+  const refresh = useCallback(async () => {
+    const res = await fetch(appPath('/api/debug/requests'));
+    setLogs(await res.json());
+  }, []);
 
   useEffect(() => {
     refresh();
-    const interval = setInterval(refresh, 3000);
+    const interval = setInterval(refresh, 2000);
     return () => clearInterval(interval);
-  }, []);
+  }, [refresh]);
 
-  function clear() {
-    fetch(appPath('/api/debug/requests'), { method: 'DELETE' }).then(refresh);
+  async function clear() {
+    setBusy(true);
+    try {
+      await fetch(appPath('/api/debug/requests'), { method: 'DELETE' });
+      setLogs([]);
+    } finally {
+      setBusy(false);
+    }
   }
 
   return (
@@ -29,8 +35,8 @@ export default function DebugPage() {
       </div>
 
       <div style={{ marginBottom: 12, display: 'flex', gap: 8 }}>
-        <button className="btn btn-sm" onClick={refresh}>Refresh</button>
-        <button className="btn btn-sm" onClick={clear}>Clear</button>
+        <button className="btn btn-sm" onClick={refresh} disabled={busy}>Refresh</button>
+        <button className="btn btn-sm" onClick={clear} disabled={busy}>{busy ? 'Clearing…' : 'Clear'}</button>
       </div>
 
       <div className="panel">
