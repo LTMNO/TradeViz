@@ -1,10 +1,19 @@
 import { StatusBadge } from '../components/StatusBadge';
+import DemoRunStrip from '../components/DemoRunStrip';
 
-export default function FailingTradesPage({ trades, onNavigate }) {
+export default function FailingTradesPage({ trades, onNavigate, activeScenario }) {
   const failing = trades.filter((t) => t.status === 'FAILED');
 
   return (
     <div>
+      {activeScenario && (
+        <DemoRunStrip
+          scenario={activeScenario}
+          activePage="failing"
+          onNavigate={onNavigate}
+        />
+      )}
+
       <div className="page-header">
         <h1>Failing Trades</h1>
         <p>{failing.length} trade{failing.length !== 1 ? 's' : ''} requiring investigation</p>

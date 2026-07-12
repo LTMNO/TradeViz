@@ -1,0 +1,763 @@
+{
+  "created": "1783816139915",
+  "updated": "1783816139916",
+  "name": "Scenario B — Millennium Failing Trade",
+  "description": "TradeViz-synced: one log HTTP per UI step, 2–3s delays. Open Investigation Log with Live on before firing /sync.",
+  "tags": [
+    "TradeViz",
+    "demo"
+  ],
+  "connectors": [
+    "@ssnc/connector-webhook",
+    "@ssnc/connector-http",
+    "@ssnc/connector-delay",
+    "@ssnc/connector-agent"
+  ],
+  "template": {
+    "displayName": "Scenario B — Millennium Failing Trade",
+    "valid": true,
+    "connectionIds": [],
+    "trigger": {
+      "name": "trigger",
+      "valid": true,
+      "displayName": "B1 — Failing Trade Alert (Signal)",
+      "type": "CONNECTOR_TRIGGER",
+      "settings": {
+        "connectorName": "@ssnc/connector-webhook",
+        "connectorVersion": "~0.1.18",
+        "connectorType": "OFFICIAL",
+        "packageType": "ARCHIVE",
+        "input": {
+          "authType": "none",
+          "authFields": {}
+        },
+        "inputUiInfo": {
+          "schema": {
+            "authFields": {}
+          }
+        },
+        "triggerName": "catch_webhook",
+        "sampleData": {
+          "method": "POST",
+          "headers": {
+            "content-type": "application/json"
+          },
+          "body": {
+            "eventId": "ALERT-2026-07-09-0042",
+            "eventType": "failing_trade_alert",
+            "trade": {
+              "tradeId": "TRD-2026-048291",
+              "client": "Millennium Management",
+              "breakType": "SSI_MISMATCH",
+              "status": "FAILED"
+            },
+            "request": {
+              "priority": "high",
+              "requiresApproval": false,
+              "source": "workhq-test-harness"
+            }
+          }
+        }
+      },
+      "nextAction": {
+        "name": "step_0",
+        "type": "CONNECTOR",
+        "valid": true,
+        "displayName": "Log B1 — Alert in TradeViz (HTTP GET)",
+        "settings": {
+          "input": {
+            "url": "https://scportal.blueprism.com/TradeViz/functions/logFailingTradeAlert",
+            "body": {},
+            "method": "GET",
+            "headers": {},
+            "authType": "NONE",
+            "body_type": "none",
+            "use_proxy": false,
+            "authFields": {},
+            "queryParams": {
+              "trade_id": "{{trigger['body']['trade']['tradeId']}}"
+            },
+            "proxy_settings": {},
+            "response_is_binary": false
+          },
+          "connectorName": "@ssnc/connector-http",
+          "connectorType": "OFFICIAL",
+          "actionName": "send_request",
+          "inputUiInfo": {
+            "schema": {
+              "body": {},
+              "authFields": {},
+              "proxy_settings": {}
+            },
+            "queryParams": {
+              "trade_id": "{{trigger['body']['trade']['tradeId']}}"
+            }
+          },
+          "packageType": "ARCHIVE",
+          "connectorVersion": "~0.8.2",
+          "errorHandlingOptions": {
+            "retryOnFailure": {
+              "value": false
+            },
+            "continueOnFailure": {
+              "value": true
+            }
+          }
+        },
+        "nextAction": {
+          "name": "step_10",
+          "skip": false,
+          "type": "CONNECTOR",
+          "valid": true,
+          "displayName": "Delay 3s — B2 agent",
+          "settings": {
+            "input": {
+              "unit": "seconds",
+              "delayFor": "3"
+            },
+            "connectorName": "@ssnc/connector-delay",
+            "connectorType": "OFFICIAL",
+            "actionName": "delayFor",
+            "inputUiInfo": {
+              "customizedInputs": {}
+            },
+            "packageType": "ARCHIVE",
+            "connectorVersion": "~0.3.12",
+            "errorHandlingOptions": {
+              "retryOnFailure": {
+                "value": false
+              },
+              "continueOnFailure": {
+                "value": false
+              }
+            }
+          },
+          "nextAction": {
+            "name": "step_1",
+            "type": "CONNECTOR",
+            "valid": true,
+            "displayName": "B2 — Interpret Settlement Break (AI Agent)",
+            "settings": {
+              "input": {
+                "prompt": "You are a settlement operations analyst. A failing trade alert has been received.\n\nEvent: {{trigger['body']['eventType']}} ({{trigger['body']['eventId']}})\nTrade: {{trigger['body']['trade']}}\n\nInterpret the settlement failure.",
+                "agentId": "ykULzrGCe1CzT3int3ETG"
+              },
+              "connectorName": "@ssnc/connector-agent",
+              "connectorType": "OFFICIAL",
+              "actionName": "run_agent",
+              "inputUiInfo": {
+                "customizedInputs": {
+                  "agentId": false
+                }
+              },
+              "packageType": "ARCHIVE",
+              "connectorVersion": "~0.4.12",
+              "errorHandlingOptions": {
+                "retryOnFailure": {
+                  "value": false
+                },
+                "continueOnFailure": {
+                  "value": false
+                }
+              }
+            },
+            "nextAction": {
+              "name": "step_d1",
+              "skip": false,
+              "type": "CONNECTOR",
+              "valid": true,
+              "displayName": "Delay 2s — B2 log",
+              "settings": {
+                "input": {
+                  "unit": "seconds",
+                  "delayFor": "2"
+                },
+                "connectorName": "@ssnc/connector-delay",
+                "connectorType": "OFFICIAL",
+                "actionName": "delayFor",
+                "inputUiInfo": {
+                  "customizedInputs": {}
+                },
+                "packageType": "ARCHIVE",
+                "connectorVersion": "~0.3.12",
+                "errorHandlingOptions": {
+                  "retryOnFailure": {
+                    "value": false
+                  },
+                  "continueOnFailure": {
+                    "value": false
+                  }
+                }
+              },
+              "nextAction": {
+                "name": "step_1b",
+                "type": "CONNECTOR",
+                "valid": true,
+                "displayName": "Log B2 — Interpret in TradeViz",
+                "settings": {
+                  "input": {
+                    "url": "https://scportal.blueprism.com/TradeViz/functions/logInvestigationStep",
+                    "body": {},
+                    "method": "GET",
+                    "headers": {},
+                    "authType": "NONE",
+                    "body_type": "none",
+                    "use_proxy": false,
+                    "authFields": {},
+                    "queryParams": {
+                      "step_id": "B2",
+                      "trade_id": "{{trigger['body']['trade']['tradeId']}}",
+                      "break_type": "{{trigger['body']['trade']['breakType']}}",
+                      "detail": "Classified as SSI_MISMATCH — settlement break interpreted by WorkHQ agent"
+                    },
+                    "proxy_settings": {},
+                    "response_is_binary": false
+                  },
+                  "connectorName": "@ssnc/connector-http",
+                  "connectorType": "OFFICIAL",
+                  "actionName": "send_request",
+                  "inputUiInfo": {
+                    "schema": {
+                      "body": {},
+                      "authFields": {},
+                      "proxy_settings": {}
+                    },
+                    "queryParams": {
+                      "step_id": "B2",
+                      "trade_id": "{{trigger['body']['trade']['tradeId']}}",
+                      "break_type": "{{trigger['body']['trade']['breakType']}}",
+                      "detail": "Classified as SSI_MISMATCH — settlement break interpreted by WorkHQ agent"
+                    }
+                  },
+                  "packageType": "ARCHIVE",
+                  "connectorVersion": "~0.8.2",
+                  "errorHandlingOptions": {
+                    "retryOnFailure": {
+                      "value": false
+                    },
+                    "continueOnFailure": {
+                      "value": true
+                    }
+                  }
+                },
+                "nextAction": {
+                  "name": "step_d2",
+                  "skip": false,
+                  "type": "CONNECTOR",
+                  "valid": true,
+                  "displayName": "Delay 3s — B3 investigate",
+                  "settings": {
+                    "input": {
+                      "unit": "seconds",
+                      "delayFor": "3"
+                    },
+                    "connectorName": "@ssnc/connector-delay",
+                    "connectorType": "OFFICIAL",
+                    "actionName": "delayFor",
+                    "inputUiInfo": {
+                      "customizedInputs": {}
+                    },
+                    "packageType": "ARCHIVE",
+                    "connectorVersion": "~0.3.12",
+                    "errorHandlingOptions": {
+                      "retryOnFailure": {
+                        "value": false
+                      },
+                      "continueOnFailure": {
+                        "value": false
+                      }
+                    }
+                  },
+                  "nextAction": {
+                    "name": "step_2",
+                    "type": "CONNECTOR",
+                    "valid": true,
+                    "displayName": "B3 — Investigate Trade in TradeViz (HTTP GET)",
+                    "settings": {
+                      "input": {
+                        "url": "https://scportal.blueprism.com/TradeViz/functions/investigateTrade",
+                        "body": {},
+                        "method": "GET",
+                        "headers": {},
+                        "authType": "NONE",
+                        "body_type": "none",
+                        "use_proxy": false,
+                        "authFields": {},
+                        "queryParams": {
+                          "trade_id": "{{trigger['body']['trade']['tradeId']}}"
+                        },
+                        "proxy_settings": {},
+                        "response_is_binary": false
+                      },
+                      "connectorName": "@ssnc/connector-http",
+                      "connectorType": "OFFICIAL",
+                      "actionName": "send_request",
+                      "inputUiInfo": {
+                        "schema": {
+                          "body": {},
+                          "authFields": {},
+                          "proxy_settings": {}
+                        },
+                        "queryParams": {
+                          "trade_id": "{{trigger['body']['trade']['tradeId']}}"
+                        }
+                      },
+                      "packageType": "ARCHIVE",
+                      "connectorVersion": "~0.8.2",
+                      "errorHandlingOptions": {
+                        "retryOnFailure": {
+                          "value": false
+                        },
+                        "continueOnFailure": {
+                          "value": false
+                        }
+                      }
+                    },
+                    "nextAction": {
+                      "name": "step_d3",
+                      "skip": false,
+                      "type": "CONNECTOR",
+                      "valid": true,
+                      "displayName": "Delay 3s — route B4",
+                      "settings": {
+                        "input": {
+                          "unit": "seconds",
+                          "delayFor": "3"
+                        },
+                        "connectorName": "@ssnc/connector-delay",
+                        "connectorType": "OFFICIAL",
+                        "actionName": "delayFor",
+                        "inputUiInfo": {
+                          "customizedInputs": {}
+                        },
+                        "packageType": "ARCHIVE",
+                        "connectorVersion": "~0.3.12",
+                        "errorHandlingOptions": {
+                          "retryOnFailure": {
+                            "value": false
+                          },
+                          "continueOnFailure": {
+                            "value": false
+                          }
+                        }
+                      },
+                      "nextAction": {
+                        "name": "step_3",
+                        "type": "ROUTER",
+                        "valid": true,
+                        "displayName": "Auto-Executable? Route to B4 or Human Review",
+                        "settings": {
+                          "branches": [
+                            {
+                              "branchName": "Auto-Executable — Proceed to B4",
+                              "branchType": "CONDITION",
+                              "conditions": [
+                                [
+                                  {
+                                    "operator": "BOOLEAN_IS_TRUE",
+                                    "firstValue": "{{step_2['body']['recommended_fix']['auto_executable']}}"
+                                  }
+                                ]
+                              ]
+                            },
+                            {
+                              "branchName": "Manual Review Required",
+                              "branchType": "FALLBACK"
+                            }
+                          ],
+                          "inputUiInfo": {},
+                          "executionType": "EXECUTE_FIRST_MATCH"
+                        },
+                        "children": [
+                          {
+                            "name": "step_9",
+                            "skip": false,
+                            "type": "CONNECTOR",
+                            "valid": true,
+                            "displayName": "Delay 2s — B4 ops",
+                            "settings": {
+                              "input": {
+                                "unit": "seconds",
+                                "delayFor": "2"
+                              },
+                              "connectorName": "@ssnc/connector-delay",
+                              "connectorType": "OFFICIAL",
+                              "actionName": "delayFor",
+                              "inputUiInfo": {
+                                "customizedInputs": {}
+                              },
+                              "packageType": "ARCHIVE",
+                              "connectorVersion": "~0.3.12",
+                              "errorHandlingOptions": {
+                                "retryOnFailure": {
+                                  "value": false
+                                },
+                                "continueOnFailure": {
+                                  "value": false
+                                }
+                              }
+                            },
+                            "nextAction": {
+                              "name": "step_4",
+                              "type": "CONNECTOR",
+                              "valid": true,
+                              "displayName": "B4 — Create Ops Request (HTTP POST)",
+                              "settings": {
+                                "input": {
+                                  "url": "https://scportal.blueprism.com/TradeViz/api/ops-requests",
+                                  "body": {
+                                    "data": {
+                                      "trade_id": "{{trigger['body']['trade']['tradeId']}}",
+                                      "action": "{{step_2['body']['recommended_fix']['action']}}",
+                                      "ssi_id": "{{step_2['body']['recommended_fix']['ssi_id']}}",
+                                      "source": "workhq"
+                                    }
+                                  },
+                                  "method": "POST",
+                                  "headers": {
+                                    "Content-Type": "application/json"
+                                  },
+                                  "authType": "NONE",
+                                  "body_type": "json",
+                                  "use_proxy": false,
+                                  "authFields": {},
+                                  "queryParams": {},
+                                  "proxy_settings": {},
+                                  "response_is_binary": false
+                                },
+                                "connectorName": "@ssnc/connector-http",
+                                "connectorType": "OFFICIAL",
+                                "actionName": "send_request",
+                                "inputUiInfo": {
+                                  "body": {
+                                    "data": {
+                                      "trade_id": "{{trigger['body']['trade']['tradeId']}}",
+                                      "action": "{{step_2['body']['recommended_fix']['action']}}",
+                                      "ssi_id": "{{step_2['body']['recommended_fix']['ssi_id']}}",
+                                      "source": "workhq"
+                                    }
+                                  },
+                                  "schema": {
+                                    "body": {
+                                      "data": {
+                                        "type": "JSON",
+                                        "required": true,
+                                        "displayName": "JSON Body"
+                                      }
+                                    },
+                                    "authFields": {},
+                                    "proxy_settings": {}
+                                  }
+                                },
+                                "packageType": "ARCHIVE",
+                                "connectorVersion": "~0.8.2",
+                                "errorHandlingOptions": {
+                                  "retryOnFailure": {
+                                    "value": false
+                                  },
+                                  "continueOnFailure": {
+                                    "value": false
+                                  }
+                                }
+                              },
+                              "nextAction": {
+                                "name": "step_d4",
+                                "skip": false,
+                                "type": "CONNECTOR",
+                                "valid": true,
+                                "displayName": "Delay 3s — B5 agent",
+                                "settings": {
+                                  "input": {
+                                    "unit": "seconds",
+                                    "delayFor": "3"
+                                  },
+                                  "connectorName": "@ssnc/connector-delay",
+                                  "connectorType": "OFFICIAL",
+                                  "actionName": "delayFor",
+                                  "inputUiInfo": {
+                                    "customizedInputs": {}
+                                  },
+                                  "packageType": "ARCHIVE",
+                                  "connectorVersion": "~0.3.12",
+                                  "errorHandlingOptions": {
+                                    "retryOnFailure": {
+                                      "value": false
+                                    },
+                                    "continueOnFailure": {
+                                      "value": false
+                                    }
+                                  }
+                                },
+                                "nextAction": {
+                                  "name": "step_5",
+                                  "type": "CONNECTOR",
+                                  "valid": true,
+                                  "displayName": "B5 — Draft Internal Status Notification (AI Agent)",
+                                  "settings": {
+                                    "input": {
+                                      "prompt": "Internal ops update only. No client-facing message.\n\nTrade ID: {{trigger['body']['trade']['tradeId']}}\nClient: {{trigger['body']['trade']['client']}}\nRoot Cause: {{step_2['body']['root_cause']}}\nOps Request ID: {{step_4['body']['request']['id']}}\nFix: {{step_2['body']['recommended_fix']['action']}} → {{step_2['body']['recommended_fix']['ssi_id']}}",
+                                      "agentId": "ykULzrGCe1CzT3int3ETG"
+                                    },
+                                    "connectorName": "@ssnc/connector-agent",
+                                    "connectorType": "OFFICIAL",
+                                    "actionName": "run_agent",
+                                    "inputUiInfo": {
+                                      "customizedInputs": {
+                                        "agentId": false
+                                      }
+                                    },
+                                    "packageType": "ARCHIVE",
+                                    "connectorVersion": "~0.4.12",
+                                    "errorHandlingOptions": {
+                                      "retryOnFailure": {
+                                        "value": false
+                                      },
+                                      "continueOnFailure": {
+                                        "value": false
+                                      }
+                                    }
+                                  },
+                                  "nextAction": {
+                                    "name": "step_11",
+                                    "skip": false,
+                                    "type": "CONNECTOR",
+                                    "valid": true,
+                                    "displayName": "Delay 2s — B5 log",
+                                    "settings": {
+                                      "input": {
+                                        "unit": "seconds",
+                                        "delayFor": "2"
+                                      },
+                                      "connectorName": "@ssnc/connector-delay",
+                                      "connectorType": "OFFICIAL",
+                                      "actionName": "delayFor",
+                                      "inputUiInfo": {
+                                        "customizedInputs": {}
+                                      },
+                                      "packageType": "ARCHIVE",
+                                      "connectorVersion": "~0.3.12",
+                                      "errorHandlingOptions": {
+                                        "retryOnFailure": {
+                                          "value": false
+                                        },
+                                        "continueOnFailure": {
+                                          "value": false
+                                        }
+                                      }
+                                    },
+                                    "nextAction": {
+                                      "name": "step_5_notify",
+                                      "type": "CONNECTOR",
+                                      "valid": true,
+                                      "displayName": "Log B5 — Notification in TradeViz",
+                                      "settings": {
+                                        "input": {
+                                          "url": "https://scportal.blueprism.com/TradeViz/api/investigation-log/step",
+                                          "body": {},
+                                          "method": "POST",
+                                          "headers": {},
+                                          "authType": "NONE",
+                                          "body_type": "none",
+                                          "use_proxy": false,
+                                          "authFields": {},
+                                          "queryParams": {
+                                            "step_id": "B5",
+                                            "detail": "Internal status notification drafted — workflow RESOLVED",
+                                            "source": "workhq",
+                                            "trade_id": "{{trigger['body']['trade']['tradeId']}}",
+                                            "ops_request_id": "{{step_4['body']['request']['id']}}"
+                                          },
+                                          "proxy_settings": {},
+                                          "response_is_binary": false
+                                        },
+                                        "connectorName": "@ssnc/connector-http",
+                                        "connectorType": "OFFICIAL",
+                                        "actionName": "send_request",
+                                        "inputUiInfo": {
+                                          "body": {},
+                                          "schema": {
+                                            "body": {},
+                                            "authFields": {},
+                                            "proxy_settings": {}
+                                          },
+                                          "queryParams": {
+                                            "step_id": "B5",
+                                            "detail": "Internal status notification drafted — workflow RESOLVED",
+                                            "source": "workhq",
+                                            "trade_id": "{{trigger['body']['trade']['tradeId']}}",
+                                            "ops_request_id": "{{step_4['body']['request']['id']}}"
+                                          }
+                                        },
+                                        "packageType": "ARCHIVE",
+                                        "connectorVersion": "~0.8.2",
+                                        "errorHandlingOptions": {
+                                          "retryOnFailure": {
+                                            "value": false
+                                          },
+                                          "continueOnFailure": {
+                                            "value": true
+                                          }
+                                        }
+                                      },
+                                      "nextAction": {
+                                        "name": "step_7",
+                                        "type": "CONNECTOR",
+                                        "valid": true,
+                                        "displayName": "Return Response (/sync)",
+                                        "settings": {
+                                          "input": {
+                                            "fields": {
+                                              "body": {
+                                                "trade_id": "{{trigger['body']['trade']['tradeId']}}",
+                                                "fix_ssi_id": "{{step_2['body']['recommended_fix']['ssi_id']}}",
+                                                "root_cause": "{{step_2['body']['root_cause']}}",
+                                                "ops_request_id": "{{step_4['body']['request']['id']}}",
+                                                "workflow_result": "RESOLVED"
+                                              },
+                                              "status": 200,
+                                              "headers": {}
+                                            },
+                                            "respond": "stop",
+                                            "responseType": "json"
+                                          },
+                                          "connectorName": "@ssnc/connector-webhook",
+                                          "connectorType": "OFFICIAL",
+                                          "actionName": "return_response",
+                                          "inputUiInfo": {
+                                            "schema": {
+                                              "fields": {
+                                                "body": {
+                                                  "type": "JSON",
+                                                  "required": true,
+                                                  "displayName": "JSON Body"
+                                                },
+                                                "status": {
+                                                  "type": "NUMBER",
+                                                  "required": false,
+                                                  "displayName": "Status",
+                                                  "defaultValue": 200
+                                                },
+                                                "headers": {
+                                                  "type": "OBJECT",
+                                                  "required": false,
+                                                  "displayName": "Headers"
+                                                }
+                                              }
+                                            }
+                                          },
+                                          "packageType": "ARCHIVE",
+                                          "connectorVersion": "~0.1.18",
+                                          "errorHandlingOptions": {
+                                            "retryOnFailure": {
+                                              "value": false
+                                            },
+                                            "continueOnFailure": {
+                                              "value": false
+                                            }
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          },
+                          {
+                            "name": "step_6",
+                            "type": "CONNECTOR",
+                            "valid": true,
+                            "displayName": "Escalate to Human Review (AI Agent)",
+                            "settings": {
+                              "input": {
+                                "prompt": "Manual review required.\n\nTrade ID: {{trigger['body']['trade']['tradeId']}}\nClient: {{trigger['body']['trade']['client']}}\nRoot Cause: {{step_2['body']['root_cause']}}",
+                                "agentId": "eEBnIkzAEKuXatzmi9rrk"
+                              },
+                              "connectorName": "@ssnc/connector-agent",
+                              "connectorType": "OFFICIAL",
+                              "actionName": "run_agent",
+                              "inputUiInfo": {},
+                              "packageType": "ARCHIVE",
+                              "connectorVersion": "~0.4.12",
+                              "errorHandlingOptions": {
+                                "retryOnFailure": {
+                                  "value": false
+                                },
+                                "continueOnFailure": {
+                                  "value": false
+                                }
+                              }
+                            },
+                            "nextAction": {
+                              "name": "step_8",
+                              "type": "CONNECTOR",
+                              "valid": true,
+                              "displayName": "Return Response — Escalation (/sync)",
+                              "settings": {
+                                "input": {
+                                  "fields": {
+                                    "body": {
+                                      "workflow_result": "ESCALATED",
+                                      "trade_id": "{{trigger['body']['trade']['tradeId']}}",
+                                      "root_cause": "{{step_2['body']['root_cause']}}"
+                                    },
+                                    "status": 200,
+                                    "headers": {}
+                                  },
+                                  "respond": "stop",
+                                  "responseType": "json"
+                                },
+                                "connectorName": "@ssnc/connector-webhook",
+                                "connectorType": "OFFICIAL",
+                                "actionName": "return_response",
+                                "inputUiInfo": {
+                                  "schema": {
+                                    "fields": {
+                                      "body": {
+                                        "type": "JSON",
+                                        "required": true,
+                                        "displayName": "JSON Body"
+                                      },
+                                      "status": {
+                                        "type": "NUMBER",
+                                        "required": false,
+                                        "displayName": "Status",
+                                        "defaultValue": 200
+                                      },
+                                      "headers": {
+                                        "type": "OBJECT",
+                                        "required": false,
+                                        "displayName": "Headers"
+                                      }
+                                    }
+                                  }
+                                },
+                                "packageType": "ARCHIVE",
+                                "connectorVersion": "~0.1.18",
+                                "errorHandlingOptions": {
+                                  "retryOnFailure": {
+                                    "value": false
+                                  },
+                                  "continueOnFailure": {
+                                    "value": false
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "schemaVersion": "3"
+  },
+  "blogUrl": "",
+  "metadata": null
+}

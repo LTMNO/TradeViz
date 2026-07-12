@@ -1,10 +1,19 @@
 import { StatusBadge } from '../components/StatusBadge';
+import DemoRunStrip from '../components/DemoRunStrip';
 
-export default function DashboardPage({ stats, trades, onNavigate }) {
+export default function DashboardPage({ stats, trades, onNavigate, activeScenario }) {
   const recentFails = trades.filter((t) => t.status === 'FAILED').slice(0, 5);
 
   return (
     <div>
+      {activeScenario && (
+        <DemoRunStrip
+          scenario={activeScenario}
+          activePage="dashboard"
+          onNavigate={onNavigate}
+        />
+      )}
+
       <div className="page-header">
         <h1>Operations Dashboard</h1>
         <p>Post-trade settlement monitoring — {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}</p>

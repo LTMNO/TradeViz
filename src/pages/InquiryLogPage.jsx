@@ -29,6 +29,7 @@ export default function InquiryLogPage(props) {
   return (
     <WorkflowLogView
       {...props}
+      demoActivePage="inquirylog"
       title="Pricing Inquiry Log"
       completeTitle="Reply sent"
       completeMessage={

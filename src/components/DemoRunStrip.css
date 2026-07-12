@@ -1,0 +1,107 @@
+.demo-run-strip {
+  margin-bottom: 20px;
+  padding: 14px 16px;
+  border-radius: 8px;
+  border: 1px solid var(--tv-gray-30);
+  background: linear-gradient(180deg, #f8fafc 0%, var(--tv-white) 100%);
+}
+
+.demo-run-strip-compact {
+  margin-bottom: 16px;
+  padding: 10px 12px;
+}
+
+.demo-run-strip-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px 12px;
+  margin-bottom: 12px;
+}
+
+.demo-run-strip-kicker {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--tv-blue);
+}
+
+.demo-run-strip-tagline {
+  font-size: 13px;
+  color: var(--tv-gray-70);
+}
+
+.demo-run-beats {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  gap: 4px 0;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.demo-run-beat {
+  display: flex;
+  align-items: center;
+}
+
+.demo-run-beat-arrow {
+  color: var(--tv-gray-50);
+  font-size: 14px;
+  padding: 0 6px;
+  user-select: none;
+}
+
+.demo-run-beat-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--tv-gray-30);
+  background: var(--tv-white);
+  text-align: left;
+  min-width: 120px;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.demo-run-beat-btn:hover {
+  border-color: var(--tv-blue);
+}
+
+.demo-run-beat-active .demo-run-beat-btn {
+  border-color: var(--tv-blue);
+  background: var(--tv-blue-light);
+  box-shadow: 0 0 0 1px var(--tv-blue);
+}
+
+.demo-run-beat-done .demo-run-beat-btn {
+  border-color: #b8dfc8;
+  background: #f0faf4;
+}
+
+.demo-run-beat-step {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--tv-gray-50);
+}
+
+.demo-run-beat-active .demo-run-beat-step {
+  color: var(--tv-blue);
+}
+
+.demo-run-beat-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--tv-navy);
+}
+
+.demo-run-beat-hint {
+  font-size: 11px;
+  color: var(--tv-gray-50);
+}

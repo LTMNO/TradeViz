@@ -126,9 +126,11 @@ export function recordEodStepUpdate({ step_id, detail, draft, approved_by, comme
       return recordHumanApproval({ approved_by, detail });
     case 'C5':
       return recordSendCommentary({ detail, commentary_id });
-    default:
+    default: {
+      const now = new Date().toISOString();
       updateStep(step_id, now, detail ?? `Step ${step_id} completed via WorkHQ`);
       return getEodLog();
+    }
   }
 }
 

@@ -18,6 +18,7 @@ export default function InvestigationLogPage(props) {
   return (
     <WorkflowLogView
       {...props}
+      demoActivePage="log"
       title="Investigation Log"
       completeTitle="Workflow resolved"
       completeMessage={

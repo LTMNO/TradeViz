@@ -1,4 +1,6 @@
+import { useEffect, useRef } from 'react';
 import { ResourceBadge, formatDate } from './StatusBadge';
+import DemoRunStrip from './DemoRunStrip';
 
 function formatLiveTime(ts) {
   if (!ts) return 'connecting…';
@@ -84,11 +86,19 @@ export default function WorkflowLogView({
   onRefresh,
   logUpdatedAt,
   resetting,
+  livePolling = false,
+  onLivePollingChange,
+  activeScenario,
+  onNavigate,
+  demoActivePage,
   completeTitle = 'Workflow resolved',
   completeMessage,
   metaChips = [],
   flowAriaLabel = 'Workflow steps',
 }) {
+  const flowChartRef = useRef(null);
+  const activeStepRef = useRef(null);
+
   if (!log) return <div className="page-loading">Loading workflow log…</div>;
 
   const steps = log.steps ?? [];
@@ -96,6 +106,23 @@ export default function WorkflowLogView({
   const progressPct = steps.length ? Math.round((completedCount / steps.length) * 100) : 0;
   const allComplete = completedCount === steps.length && steps.length > 0;
   const { state } = log;
+
+  const highestCompleted = steps.reduce(
+    (max, s, i) => (s.timestamp ? i : max),
+    -1,
+  );
+  const activeStep = highestCompleted >= 0 ? steps[highestCompleted + 1] : steps[0];
+  const awaitingApproval = activeStep?.human_gate && !activeStep?.timestamp;
+
+  useEffect(() => {
+    if (!activeStepRef.current || !flowChartRef.current) return;
+    const chart = flowChartRef.current;
+    const node = activeStepRef.current;
+    const chartRect = chart.getBoundingClientRect();
+    const nodeRect = node.getBoundingClientRect();
+    const offset = nodeRect.left - chartRect.left - chartRect.width / 2 + nodeRect.width / 2;
+    chart.scrollTo({ left: chart.scrollLeft + offset, behavior: 'smooth' });
+  }, [completedCount, awaitingApproval, logUpdatedAt]);
 
   const resolvedCompleteMessage = completeMessage ?? (
     allComplete
@@ -105,22 +132,45 @@ export default function WorkflowLogView({
 
   return (
     <div>
+      {activeScenario && onNavigate && (
+        <DemoRunStrip
+          scenario={activeScenario}
+          activePage={demoActivePage ?? activeScenario.logPage}
+          onNavigate={onNavigate}
+          compact
+        />
+      )}
+
       <div className="page-header flow-page-header">
         <div>
           <h1>{title}</h1>
           <p>{log.scenario}</p>
         </div>
         <div className="flow-header-controls">
-          <span className="live-badge" title="Updates automatically while this page is open">
-            <span className="live-dot" aria-hidden="true" />
-            Live · every {logUpdatedAt ? '0.5s' : '…'}
-            {logUpdatedAt ? ` · ${formatLiveTime(logUpdatedAt)}` : ''}
-          </span>
+          <button
+            type="button"
+            className={`live-toggle ${livePolling ? 'live-toggle-on' : 'live-toggle-off'}`}
+            onClick={() => onLivePollingChange?.(!livePolling)}
+            title={livePolling
+              ? 'Live refresh on (0.5s) — click to pause polling'
+              : 'Live refresh off — click to enable for demo'}
+            aria-pressed={livePolling}
+          >
+            <span className={`live-dot ${livePolling ? '' : 'live-dot-off'}`} aria-hidden="true" />
+            {livePolling
+              ? `Live · 0.5s${logUpdatedAt ? ` · ${formatLiveTime(logUpdatedAt)}` : ''}`
+              : 'Live off'}
+          </button>
           <button className="btn btn-sm btn-ghost" onClick={onRefresh} disabled={resetting}>
             Refresh now
           </button>
-          <button className="btn btn-sm" onClick={onReset} disabled={resetting}>
-            {resetting ? 'Resetting…' : 'Reset Demo'}
+          <button
+            className="btn btn-sm"
+            onClick={onReset}
+            disabled={resetting}
+            title="Reset Scenarios A, B, and C to pending"
+          >
+            {resetting ? 'Resetting…' : 'Reset All Demos'}
           </button>
         </div>
       </div>
@@ -129,6 +179,18 @@ export default function WorkflowLogView({
         <div className="fix-banner flow-complete-banner">
           <h3>{completeTitle}</h3>
           <p>{resolvedCompleteMessage}</p>
+        </div>
+      )}
+
+      {awaitingApproval && (
+        <div className="flow-awaiting-banner" role="status">
+          <span className="flow-awaiting-icon" aria-hidden="true">⏸</span>
+          <div>
+            <strong>{activeStep.step_id} — Awaiting human approval</strong>
+            <p>
+              WorkHQ is paused before the approve step. Narrate the draft, then watch this node turn green when approval is logged.
+            </p>
+          </div>
         </div>
       )}
 
@@ -158,7 +220,7 @@ export default function WorkflowLogView({
             </div>
           )}
 
-          <div className="flow-chart" role="list" aria-label={flowAriaLabel}>
+          <div className="flow-chart" ref={flowChartRef} role="list" aria-label={flowAriaLabel}>
             {steps.map((step, index) => {
               const baseStatus = deriveStepStatus(step, index, steps);
               const status = step.human_gate && baseStatus === 'active' && !step.timestamp
@@ -167,9 +229,15 @@ export default function WorkflowLogView({
               const connectorDone = index > 0 && steps[index - 1].timestamp;
               const connectorPartial = index > 0 && !steps[index - 1].timestamp
                 && steps.slice(0, index).some((s) => s.timestamp);
+              const isActiveStep = step.step_id === activeStep?.step_id;
 
               return (
-                <div className="flow-segment" key={step.step_id} role="listitem">
+                <div
+                  className="flow-segment"
+                  key={step.step_id}
+                  role="listitem"
+                  ref={isActiveStep ? activeStepRef : undefined}
+                >
                   {index > 0 && (
                     <FlowConnector
                       index={index}

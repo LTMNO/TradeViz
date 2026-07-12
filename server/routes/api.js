@@ -11,6 +11,7 @@ import { createOpsRequest, listOpsRequests, getOpsRequest, clearOpsRequests } fr
 import {
   getInvestigationLog,
   recordAlert,
+  recordAgentStep,
   recordInvestigation,
   recordOpsRequest,
   recordNotificationStep,
@@ -106,6 +107,76 @@ function handleLogAlert(req, res) {
     });
   }
   const log = recordAlert(alert);
+  return res.status(201).json({ success: true, log });
+}
+
+function handleInvestigationStep(req, res) {
+  const payload = { ...req.query, ...req.body, ...(req.body?.data ?? {}) };
+  const stepId = payload.step_id;
+  if (!stepId) {
+    return res.status(400).json({ error: 'step_id is required' });
+  }
+
+  let log;
+  if (stepId === 'B5') {
+    log = recordNotificationStep({
+      detail: payload.detail,
+      ops_request_id: payload.ops_request_id,
+      trade_id: payload.trade_id,
+    });
+  } else if (stepId === 'B2') {
+    log = recordAgentStep({
+      break_type: payload.break_type,
+      trade_id: payload.trade_id,
+      summary: payload.detail,
+    });
+  } else {
+    log = recordStepUpdate({
+      step_id: stepId,
+      detail: payload.detail,
+    });
+  }
+
+  return res.status(201).json({ success: true, log });
+}
+
+function handleInquiryStep(req, res) {
+  const payload = { ...req.query, ...req.body, ...(req.body?.data ?? {}) };
+  const stepId = payload.step_id;
+  if (!stepId) {
+    return res.status(400).json({ error: 'step_id is required' });
+  }
+  try {
+    const log = recordInquiryStepUpdate({
+      step_id: stepId,
+      detail: payload.detail,
+      draft: payload.draft ?? payload.reply,
+      approved_by: payload.approved_by,
+      message_id: payload.message_id,
+      client: payload.client,
+      instrument: payload.instrument,
+      inquiry_id: payload.inquiry_id,
+    });
+    return res.status(201).json({ success: true, log });
+  } catch (err) {
+    return res.status(404).json({ error: err.message ?? 'Step update failed' });
+  }
+}
+
+function handleEodStep(req, res) {
+  const payload = { ...req.query, ...req.body, ...(req.body?.data ?? {}) };
+  const stepId = payload.step_id;
+  if (!stepId) {
+    return res.status(400).json({ error: 'step_id is required' });
+  }
+  const log = recordEodStepUpdate({
+    step_id: stepId,
+    detail: payload.detail,
+    draft: payload.draft ?? payload.commentary,
+    approved_by: payload.approved_by,
+    commentary_id: payload.commentary_id,
+    client: payload.client,
+  });
   return res.status(201).json({ success: true, log });
 }
 
@@ -289,27 +360,11 @@ export function registerRoutes(app) {
   });
 
   app.post('/api/investigation-log/step', (req, res) => {
-    const payload = { ...req.query, ...req.body, ...(req.body?.data ?? {}) };
-    const stepId = payload.step_id;
-    if (!stepId) {
-      return res.status(400).json({ error: 'step_id is required' });
-    }
+    handleInvestigationStep(req, res);
+  });
 
-    let log;
-    if (stepId === 'B5') {
-      log = recordNotificationStep({
-        detail: payload.detail,
-        ops_request_id: payload.ops_request_id,
-        trade_id: payload.trade_id,
-      });
-    } else {
-      log = recordStepUpdate({
-        step_id: stepId,
-        detail: payload.detail,
-      });
-    }
-
-    res.status(201).json({ success: true, log });
+  app.get('/functions/logInvestigationStep', (req, res) => {
+    handleInvestigationStep(req, res);
   });
 
   app.post('/api/investigation-log/reset', (_req, res) => {
@@ -353,20 +408,11 @@ export function registerRoutes(app) {
   });
 
   app.post('/api/eod-log/step', (req, res) => {
-    const payload = { ...req.query, ...req.body, ...(req.body?.data ?? {}) };
-    const stepId = payload.step_id;
-    if (!stepId) {
-      return res.status(400).json({ error: 'step_id is required' });
-    }
-    const log = recordEodStepUpdate({
-      step_id: stepId,
-      detail: payload.detail,
-      draft: payload.draft ?? payload.commentary,
-      approved_by: payload.approved_by,
-      commentary_id: payload.commentary_id,
-      client: payload.client,
-    });
-    res.status(201).json({ success: true, log });
+    handleEodStep(req, res);
+  });
+
+  app.get('/functions/logEodStep', (req, res) => {
+    handleEodStep(req, res);
   });
 
   app.post('/api/eod-log/approve', (req, res) => {
@@ -438,26 +484,11 @@ export function registerRoutes(app) {
   });
 
   app.post('/api/inquiry-log/step', (req, res) => {
-    const payload = { ...req.query, ...req.body, ...(req.body?.data ?? {}) };
-    const stepId = payload.step_id;
-    if (!stepId) {
-      return res.status(400).json({ error: 'step_id is required' });
-    }
-    try {
-      const log = recordInquiryStepUpdate({
-        step_id: stepId,
-        detail: payload.detail,
-        draft: payload.draft ?? payload.reply,
-        approved_by: payload.approved_by,
-        message_id: payload.message_id,
-        client: payload.client,
-        instrument: payload.instrument,
-        inquiry_id: payload.inquiry_id,
-      });
-      res.status(201).json({ success: true, log });
-    } catch (err) {
-      res.status(404).json({ error: err.message ?? 'Step update failed' });
-    }
+    handleInquiryStep(req, res);
+  });
+
+  app.get('/functions/logInquiryStep', (req, res) => {
+    handleInquiryStep(req, res);
   });
 
   app.post('/api/inquiry-log/approve', (req, res) => {

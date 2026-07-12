@@ -1,6 +1,7 @@
 import './Sidebar.css';
+import { SCENARIO_LIST, getScenario } from '../demoConfig';
 
-const NAV_ITEMS = [
+const EXPLORE_NAV = [
   { id: 'dashboard', label: 'Dashboard', section: 'main' },
   { id: 'failing', label: 'Failing Trades', section: 'main' },
   { id: 'investigate', label: 'Investigate', section: 'main' },
@@ -13,49 +14,133 @@ const NAV_ITEMS = [
   { id: 'debug', label: 'Request Log', section: 'demo' },
 ];
 
-const DEMO_SCENARIOS = [
-  { id: 'citadel', label: 'A — Citadel Inquiry', page: 'inquirylog', footer: 'US Treasury 10Y Note' },
-  { id: 'millennium', label: 'B — Millennium', page: 'log', footer: 'TRD-2026-048291' },
-  { id: 'eod', label: 'C — EOD Commentary', page: 'eodlog', footer: 'Millennium Management' },
+const EXPLORE_SECTIONS = [
+  { key: 'main', label: 'Operations' },
+  { key: 'data', label: 'Reference Data' },
+  { key: 'demo', label: 'Demo / Integration' },
 ];
 
-export default function Sidebar({ activePage, onNavigate, demoMode, onSwitchDemo }) {
-  const sections = [
-    { key: 'main', label: 'Operations' },
-    { key: 'data', label: 'Reference Data' },
-    { key: 'demo', label: 'Demo / Integration' },
-  ];
+export default function Sidebar({
+  activePage,
+  onNavigate,
+  demoMode,
+  onSwitchDemo,
+  exploreMode,
+  onExploreModeChange,
+  onStartDemo,
+  startingDemo,
+}) {
+  const activeScenario = demoMode ? getScenario(demoMode) : getScenario('millennium');
 
-  const activeScenario = DEMO_SCENARIOS.find((s) => s.id === demoMode) ?? DEMO_SCENARIOS[1];
+  if (!exploreMode) {
+    return (
+      <aside className="sidebar sidebar-demo">
+        <div className="sidebar-demo-hero">
+          <div className="sidebar-section-label">Demo console</div>
+          <p className="sidebar-demo-tagline">{activeScenario.tagline}</p>
+          <button
+            type="button"
+            className="btn btn-sm btn-start-demo"
+            onClick={onStartDemo}
+            disabled={startingDemo}
+          >
+            {startingDemo ? 'Starting…' : 'Start demo'}
+          </button>
+        </div>
+
+        <div className="sidebar-demo-switcher">
+          <div className="sidebar-section-label">Scenario</div>
+          <div className="demo-switcher-buttons">
+            {SCENARIO_LIST.map((scenario) => (
+              <button
+                key={scenario.id}
+                type="button"
+                className={`demo-switcher-btn ${demoMode === scenario.id ? 'active' : ''}`}
+                onClick={() => onSwitchDemo?.(scenario.id)}
+              >
+                {scenario.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="sidebar-section">
+          <div className="sidebar-section-label">Run of show</div>
+          <nav>
+            {activeScenario.beats.map((beat) => (
+              <button
+                key={beat.id}
+                type="button"
+                className={`nav-item nav-item-beat ${activePage === beat.page ? 'active' : ''}`}
+                onClick={() => onNavigate(beat.page, beat.tradeId)}
+              >
+                <span className="nav-beat-step">{beat.step}</span>
+                <span className="nav-beat-text">
+                  <span className="nav-beat-label">{beat.label}</span>
+                  <span className="nav-beat-hint">{beat.hint}</span>
+                </span>
+              </button>
+            ))}
+          </nav>
+        </div>
+
+        <div className="sidebar-footer">
+          <div className="sidebar-scenario">{activeScenario.shortLabel}</div>
+          <div className="sidebar-trade">{activeScenario.footer}</div>
+          <button
+            type="button"
+            className="sidebar-explore-link"
+            onClick={() => onExploreModeChange?.(true)}
+          >
+            Explore full app →
+          </button>
+        </div>
+      </aside>
+    );
+  }
 
   return (
     <aside className="sidebar">
-      <div className="sidebar-demo-switcher">
-        <div className="sidebar-section-label">Active scenario</div>
-        <div className="demo-switcher-buttons">
-          {DEMO_SCENARIOS.map((scenario) => (
-            <button
-              key={scenario.id}
-              type="button"
-              className={`demo-switcher-btn ${demoMode === scenario.id ? 'active' : ''}`}
-              onClick={() => {
-                onSwitchDemo?.(scenario.id);
-                onNavigate(scenario.page);
-              }}
-            >
-              {scenario.label}
-            </button>
-          ))}
+      {demoMode && (
+        <div className="sidebar-explore-banner">
+          <button
+            type="button"
+            className="sidebar-back-demo"
+            onClick={() => onExploreModeChange?.(false)}
+          >
+            ← Back to demo mode
+          </button>
         </div>
-      </div>
+      )}
 
-      {sections.map((section) => (
+      {demoMode && (
+        <div className="sidebar-demo-switcher">
+          <div className="sidebar-section-label">Active scenario</div>
+          <div className="demo-switcher-buttons">
+            {SCENARIO_LIST.map((scenario) => (
+              <button
+                key={scenario.id}
+                type="button"
+                className={`demo-switcher-btn ${demoMode === scenario.id ? 'active' : ''}`}
+                onClick={() => {
+                  onSwitchDemo?.(scenario.id);
+                }}
+              >
+                {scenario.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {EXPLORE_SECTIONS.map((section) => (
         <div key={section.key} className="sidebar-section">
           <div className="sidebar-section-label">{section.label}</div>
           <nav>
-            {NAV_ITEMS.filter((item) => item.section === section.key).map((item) => (
+            {EXPLORE_NAV.filter((item) => item.section === section.key).map((item) => (
               <button
                 key={item.id}
+                type="button"
                 className={`nav-item ${activePage === item.id ? 'active' : ''}`}
                 onClick={() => onNavigate(item.id)}
               >
@@ -65,10 +150,13 @@ export default function Sidebar({ activePage, onNavigate, demoMode, onSwitchDemo
           </nav>
         </div>
       ))}
-      <div className="sidebar-footer">
-        <div className="sidebar-scenario">{activeScenario.label}</div>
-        <div className="sidebar-trade">{activeScenario.footer}</div>
-      </div>
+
+      {demoMode && (
+        <div className="sidebar-footer">
+          <div className="sidebar-scenario">{activeScenario.label}</div>
+          <div className="sidebar-trade">{activeScenario.footer}</div>
+        </div>
+      )}
     </aside>
   );
 }

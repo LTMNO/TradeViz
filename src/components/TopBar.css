@@ -65,3 +65,13 @@
 .topbar .btn:hover {
   background: rgba(255, 255, 255, 0.1);
 }
+
+.topbar .btn-topbar-primary {
+  background: var(--tv-blue);
+  border-color: rgba(255, 255, 255, 0.2);
+  font-weight: 600;
+}
+
+.topbar .btn-topbar-primary:hover {
+  background: #0088d4;
+}

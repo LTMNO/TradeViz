@@ -56,6 +56,18 @@ POST https://scportal.blueprism.com/TradeViz/api/eod-log/reset
 
 ---
 
+## Import workflow JSON
+
+**File:** `workflows/Scenario C — EOD Commentary.json` (also in Downloads)
+
+WorkHQ → **Import** → select file → **Publish**
+
+After import:
+1. Add **Delay** steps (2–3s) between HTTP steps for demo pacing (same as Scenario B)
+2. For live human pause at **C4**: insert **Create User Task & Wait for Response** *before* the "Log C4" HTTP step; assign to your salesperson; complete the task in **My WorkHQ → Tasks** before the workflow continues
+
+---
+
 ## Suggested flow
 
 ```

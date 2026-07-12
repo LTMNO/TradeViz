@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 import { appPath } from '../appPath';
 import { StatusBadge, formatCurrency, formatDate } from '../components/StatusBadge';
+import DemoRunStrip from '../components/DemoRunStrip';
 
 const DEMO_TRADE = 'TRD-2026-048291';
 
-export default function InvestigatePage({ selectedTradeId, onNavigate }) {
+export default function InvestigatePage({ selectedTradeId, onNavigate, activeScenario }) {
   const tradeId = selectedTradeId || DEMO_TRADE;
   const [trade, setTrade] = useState(null);
   const [investigation, setInvestigation] = useState(null);
@@ -54,6 +55,14 @@ export default function InvestigatePage({ selectedTradeId, onNavigate }) {
 
   return (
     <div>
+      {activeScenario && (
+        <DemoRunStrip
+          scenario={activeScenario}
+          activePage="investigate"
+          onNavigate={onNavigate}
+        />
+      )}
+
       <div className="page-header">
         <h1>Investigate Trade</h1>
         <p>

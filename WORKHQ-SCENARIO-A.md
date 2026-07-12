@@ -65,6 +65,18 @@ POST https://scportal.blueprism.com/TradeViz/api/inquiry-log/reset
 
 ---
 
+## Import workflow JSON
+
+**File:** `workflows/Scenario A — Citadel Pricing Inquiry.json` (also in Downloads)
+
+WorkHQ → **Import** → select file → **Publish**
+
+After import:
+1. Add **Delay** steps (2–3s) between HTTP steps for demo pacing (same as Scenario B)
+2. For live human pause at **S5**: insert **Create User Task & Wait for Response** *before* the "Log S5" HTTP step; assign to your salesperson; complete the task in **My WorkHQ → Tasks** before the workflow continues
+
+---
+
 ## Suggested flow
 
 ```

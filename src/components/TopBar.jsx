@@ -1,6 +1,13 @@
 import './TopBar.css';
 
-export default function TopBar({ onRefresh }) {
+export default function TopBar({
+  onRefresh,
+  exploreMode,
+  onExploreModeChange,
+  onStartDemo,
+  startingDemo,
+  scenarioLabel,
+}) {
   return (
     <header className="topbar">
       <div className="topbar-left">
@@ -9,12 +16,32 @@ export default function TopBar({ onRefresh }) {
           <span className="logo-divider">|</span>
           <span className="logo-product">TradeViz</span>
         </div>
-        <span className="topbar-env">Post-Trade Operations</span>
+        <span className="topbar-env">
+          {exploreMode ? 'Explore mode' : scenarioLabel ?? 'Demo mode'}
+        </span>
       </div>
       <div className="topbar-right">
-        <span className="topbar-user">Ops Desk — Morgan Stanley Demo</span>
+        {!exploreMode && onStartDemo && (
+          <button
+            type="button"
+            className="btn btn-sm btn-topbar-primary"
+            onClick={onStartDemo}
+            disabled={startingDemo}
+          >
+            {startingDemo ? 'Starting…' : 'Start demo'}
+          </button>
+        )}
+        {onExploreModeChange && (
+          <button
+            type="button"
+            className="btn btn-sm"
+            onClick={() => onExploreModeChange(!exploreMode)}
+          >
+            {exploreMode ? 'Demo mode' : 'Explore'}
+          </button>
+        )}
         {onRefresh && (
-          <button className="btn btn-sm" onClick={onRefresh}>
+          <button type="button" className="btn btn-sm" onClick={onRefresh}>
             Refresh
           </button>
         )}

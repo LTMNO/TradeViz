@@ -26,6 +26,7 @@ export default function EodLogPage(props) {
   return (
     <WorkflowLogView
       {...props}
+      demoActivePage="eodlog"
       title="EOD Commentary Log"
       completeTitle="Commentary sent"
       completeMessage={
